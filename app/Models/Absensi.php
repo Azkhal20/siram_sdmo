@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Absensi extends Model
+{
+    protected $fillable = [
+        'peserta_magang_id',
+        'tanggal',
+        'kode',
+        'jam_masuk',
+        'jam_pulang',
+        'menit_telat',
+        'keterangan'
+    ];
+
+    protected $casts = [
+        'tanggal' => 'date',
+        'menit_telat' => 'integer',
+    ];
+
+    public function pesertaMagang(): BelongsTo
+    {
+        return $this->belongsTo(PesertaMagang::class);
+    }
+}

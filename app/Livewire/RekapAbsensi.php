@@ -1,0 +1,91 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\Absensi;
+use App\Models\Kedeputian;
+use Livewire\Component;
+use Livewire\WithPagination;
+
+class RekapAbsensi extends Component
+{
+    use WithPagination;
+
+    public $search = '';
+    public $filterKedeputian = '';
+    public $fromDate = '';
+    public $toDate = '';
+    public $sortField = 'tanggal';
+    public $sortDirection = 'desc';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'filterKedeputian' => ['except' => ''],
+        'fromDate' => ['except' => ''],
+        'toDate' => ['except' => ''],
+    ];
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterKedeputian()
+    {
+        $this->resetPage();
+    }
+    public function updatingFromDate()
+    {
+        $this->resetPage();
+    }
+    public function updatingToDate()
+    {
+        $this->resetPage();
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    public function getBadgeClass($kode)
+    {
+        return match ($kode) {
+            'TK' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800',
+            'S', 'I' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
+            'TM', 'PC' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
+            'TMDHM' => 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800',
+            default => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800',
+        };
+    }
+
+    public function render()
+    {
+        $absensis = Absensi::with('pesertaMagang.kedeputian')
+            ->whereHas('pesertaMagang', function ($query) {
+                $query->where('nama', 'like', '%' . $this->search . '%');
+            })
+            ->when($this->filterKedeputian, function ($query) {
+                $query->whereHas('pesertaMagang', function ($q) {
+                    $q->where('kedeputian_id', $this->filterKedeputian);
+                });
+            })
+            ->when($this->fromDate, function ($query) {
+                $query->whereDate('tanggal', '>=', $this->fromDate);
+            })
+            ->when($this->toDate, function ($query) {
+                $query->whereDate('tanggal', '<=', $this->toDate);
+            })
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->paginate(10);
+
+        return view('livewire.rekap-absensi', [
+            'absensis' => $absensis,
+            'kedeputians' => Kedeputian::all(),
+        ]);
+    }
+}

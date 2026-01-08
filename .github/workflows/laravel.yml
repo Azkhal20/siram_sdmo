@@ -7,7 +7,7 @@ on:
     branches: [ "main", "dev" ]
 
 jobs:
-  laravel-tests:
+  CI-laravel-tests:
     runs-on: ubuntu-latest
 
     steps:

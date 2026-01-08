@@ -1,157 +1,135 @@
 <div>
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Action Bar -->
-        <div class="card mb-6 bg-white rounded-lg shadow-md p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h2 class="text-xl font-semibold text-gray-900 mb-1">Rekap Data Absensi Peserta Magang</h2>
-                    <p class="text-sm text-gray-600">Upload dan kelola data absensi peserta magang</p>
-                </div>
-                <div class="flex gap-3">
-                    <button class="btn-secondary bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200">
-                        <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Export Excel
-                    </button>
-                    <div class="relative">
-                        <input type="file" wire:model="pdfFile" class="hidden" id="pdfInput" accept="application/pdf">
-                        <label for="pdfInput" class="btn-primary cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 inline-block">
-                            <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                            Import PDF
-                        </label>
-                    </div>
-                </div>
-            </div>
-            @error('pdfFile') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-            <div wire:loading wire:target="pdfFile" class="mt-2 text-sm text-blue-600">
-                Memproses PDF... Mohon tunggu.
-            </div>
-        </div>
+    <div class="mb-8">
+        <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Dashboard Overview</h2>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Real-time statistik absensi periode ini.</p>
+    </div>
 
-        <!-- Filters -->
-        <div class="card mb-6 bg-white rounded-lg shadow-md p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Kedeputian</label>
-                    <select wire:model.live="filterKedeputian" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">Semua Kedeputian</option>
-                        @foreach($kedeputians as $kp)
-                        <option value="{{ $kp->id }}">{{ $kp->nama_kedeputian }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
-                    <input type="date" wire:model.live="startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Akhir</label>
-                    <input type="date" wire:model.live="endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-            </div>
-        </div>
-
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium opacity-90">Total Peserta</h3>
-                    <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
                 </div>
-                <p class="text-3xl font-bold">{{ $stats['total_peserta'] }}</p>
-            </div>
-
-            <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-md p-6 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium opacity-90">TK</h3>
-                    <span class="text-xs opacity-75">Tanpa Keterangan</span>
+                <div>
+                    <h5 class="text-xs font-bold uppercase text-gray-400">Total Peserta</h5>
+                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $stats['total_peserta'] }}</p>
                 </div>
-                <p class="text-3xl font-bold">{{ $stats['total_tk'] }}</p>
             </div>
-
-            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg shadow-md p-6 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium opacity-90">TM</h3>
-                    <span class="text-xs opacity-75">Telat Masuk</span>
+        </div>
+        <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-red-50 dark:bg-red-900/40 rounded-xl text-red-600 dark:text-red-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                 </div>
-                <p class="text-3xl font-bold">{{ $stats['total_tm'] }}</p>
+                <div>
+                    <h5 class="text-xs font-bold uppercase text-gray-400">Tanpa Keterangan</h5>
+                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $stats['total_tk'] }}</p>
+                </div>
             </div>
-
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium opacity-90">TMDHM</h3>
-                    <span class="text-xs opacity-75">Tidak Absen Masuk</span>
+        </div>
+        <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-amber-50 dark:bg-amber-900/40 rounded-xl text-amber-600 dark:text-amber-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                 </div>
-                <p class="text-3xl font-bold">{{ $stats['total_tmdhm'] }}</p>
+                <div>
+                    <h5 class="text-xs font-bold uppercase text-gray-400">Telat Masuk</h5>
+                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $stats['total_tm'] }}</p>
+                </div>
             </div>
-
-            <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md p-6 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium opacity-90">PC</h3>
-                    <span class="text-xs opacity-75">Pulang Cepat</span>
+        </div>
+        <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/40 rounded-xl text-emerald-600 dark:text-emerald-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                 </div>
-                <p class="text-3xl font-bold">{{ $stats['total_pc'] }}</p>
+                <div>
+                    <h5 class="text-xs font-bold uppercase text-gray-400">Pulang Cepat</h5>
+                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $stats['total_pc'] }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Activity -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tight">Data Absensi Terbaru</h3>
+                    <a href="{{ route('absensi.rekap') }}" class="text-xs font-bold text-blue-600 dark:text-blue-500 hover:underline">Lihat Semua</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th class="px-6 py-4">Nama</th>
+                                <th class="px-6 py-4">Tanggal</th>
+                                <th class="px-6 py-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            @foreach($absensis->take(5) as $abs)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">{{ $abs->pesertaMagang->nama }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ $abs->tanggal->format('d M Y') }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="{{ $this->getBadgeClass($abs->kode) }} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                                        {{ $abs->kode }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- Data Table -->
-        <div class="card bg-white rounded-lg shadow-md p-6">
-            <div class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Data Absensi</h3>
+        <!-- System Settings Quick Link -->
+        <div class="space-y-6">
+            <div class="p-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
+                <div class="relative z-10">
+                    <h4 class="text-lg font-black mb-2">Impor Data Baru?</h4>
+                    <p class="text-sm text-blue-100 mb-6 font-medium">Lakukan import file PDF absensi terbaru untuk memperbarui dashboard statistik.</p>
+                    <a href="{{ route('absensi.import') }}" class="inline-flex items-center px-4 py-2 bg-white text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-50 transition-all active:scale-95 shadow-lg">
+                        <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        Mulai Import
+                    </a>
+                </div>
+                <svg class="absolute -right-8 -bottom-8 w-40 h-40 text-white/10 group-hover:scale-110 transition-transform duration-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1-3l3 3h-3v-3z"></path>
+                </svg>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jam Masuk</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jam Pulang</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telat (Menit)</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keterangan</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($absensis as $index => $abs)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($absensis->currentPage() - 1) * $absensis->perPage() + $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $abs->pesertaMagang->nama }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $abs->tanggal->format('d/m/Y') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $this->getBadgeClass($abs->kode) }}">
-                                    {{ $abs->kode }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $abs->jam_masuk ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $abs->jam_pulang ?? '-' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $abs->menit_telat }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $abs->keterangan ?? '-' }}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-gray-500">
-                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <p class="text-sm">Belum ada data absensi</p>
-                                <p class="text-xs text-gray-400 mt-1">Silakan import file PDF untuk menampilkan data</p>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-4">
-                {{ $absensis->links() }}
+
+            <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-sm">
+                <h4 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4">Aksi Cepat</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="{{ route('master.peserta') }}" class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-600 text-center transition-all group">
+                        <svg class="w-6 h-6 mx-auto mb-2 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                        <span class="text-xs font-bold text-gray-600 dark:text-gray-400">Add Peserta</span>
+                    </a>
+                    <a href="{{ route('absensi.rekap') }}" class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-600 text-center transition-all group">
+                        <svg class="w-6 h-6 mx-auto mb-2 text-gray-400 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="text-xs font-bold text-gray-600 dark:text-gray-400">Export Rekap</span>
+                    </a>
+                </div>
             </div>
         </div>
-    </main>
+    </div>
 </div>

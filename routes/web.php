@@ -1,7 +1,16 @@
 <?php
 
+use App\Livewire\AttendanceDashboard;
+use App\Livewire\DataAbsensi;
+use App\Livewire\RekapAbsensi;
+use App\Livewire\MasterPeserta;
+use App\Livewire\MasterKedeputian;
+use App\Livewire\StatistikKode;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', AttendanceDashboard::class)->name('dashboard');
+Route::get('/absensi/import', DataAbsensi::class)->name('absensi.import');
+Route::get('/absensi/rekap', RekapAbsensi::class)->name('absensi.rekap');
+Route::get('/master/peserta', MasterPeserta::class)->name('master.peserta');
+Route::get('/master/kedeputian', MasterKedeputian::class)->name('master.kedeputian');
+Route::get('/analisis/statistik', StatistikKode::class)->name('analisis.statistik');

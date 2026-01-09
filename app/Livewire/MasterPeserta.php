@@ -13,21 +13,20 @@ class MasterPeserta extends Component
 
     public $search = '';
     public $showModal = false;
-    public $pesertaId, $nama, $no_induk, $univ, $kedeputian_id;
+    public $pesertaId, $nama, $nomor_induk, $univ, $kedeputian_id;
 
     public function rules()
     {
         return [
             'nama' => 'required|string|max:255',
-            'no_induk' => 'required|string|max:50|unique:peserta_magangs,no_induk,' . $this->pesertaId,
-            'univ' => 'nullable|string|max:255',
+            'nomor_induk' => 'required|string|max:50|unique:peserta_magang,nomor_induk,' . $this->pesertaId,
             'kedeputian_id' => 'required|exists:kedeputians,id',
         ];
     }
 
     public function create()
     {
-        $this->reset(['pesertaId', 'nama', 'no_induk', 'univ', 'kedeputian_id']);
+        $this->reset(['pesertaId', 'nama', 'nomor_induk', 'univ', 'kedeputian_id']);
         $this->showModal = true;
     }
 
@@ -36,8 +35,7 @@ class MasterPeserta extends Component
         $peserta = PesertaMagang::findOrFail($id);
         $this->pesertaId = $peserta->id;
         $this->nama = $peserta->nama;
-        $this->no_induk = $peserta->no_induk;
-        $this->univ = $peserta->univ;
+        $this->nomor_induk = $peserta->nomor_induk;
         $this->kedeputian_id = $peserta->kedeputian_id;
         $this->showModal = true;
     }
@@ -50,8 +48,7 @@ class MasterPeserta extends Component
             ['id' => $this->pesertaId],
             [
                 'nama' => $this->nama,
-                'no_induk' => $this->no_induk,
-                'univ' => $this->univ,
+                'nomor_induk' => $this->nomor_induk,
                 'kedeputian_id' => $this->kedeputian_id,
             ]
         );
@@ -71,7 +68,7 @@ class MasterPeserta extends Component
         return view('livewire.master-peserta', [
             'pesertas' => PesertaMagang::with('kedeputian')
                 ->where('nama', 'like', '%' . $this->search . '%')
-                ->orWhere('no_induk', 'like', '%' . $this->search . '%')
+                ->orWhere('nomor_induk', 'like', '%' . $this->search . '%')
                 ->paginate(10),
             'kedeputians' => Kedeputian::all(),
         ]);

@@ -21,16 +21,24 @@
                 <input type="file" wire:model="pdfFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                 <div class="space-y-4">
                     <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/40 rounded-full flex items-center justify-center mx-auto text-blue-600 dark:text-blue-500">
-                        @if($isProcessing)
-                        <svg class="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        @else
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                        @endif
+                        <div wire:loading wire:target="pdfFile">
+                            <svg class="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                        <div wire:loading.remove wire:target="pdfFile">
+                            @if($isProcessing)
+                            <svg class="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            @else
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            @endif
+                        </div>
                     </div>
                     <div>
                         <p class="text-sm font-bold text-gray-900 dark:text-white">Klik atau seret file PDF</p>
@@ -41,22 +49,37 @@
             </div>
 
             @if($pdfFile)
-            <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg text-blue-600 dark:text-blue-400">
+            <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg text-blue-600 dark:text-blue-400">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path>
+                            </svg>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ $pdfFile->getClientOriginalName() }}</p>
+                            <p class="text-[10px] text-gray-500 uppercase">{{ round($pdfFile->getSize() / 1024, 2) }} KB</p>
+                        </div>
+                    </div>
+                    <button wire:click="$set('pdfFile', null)" class="text-gray-400 hover:text-red-500">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path>
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                         </svg>
-                    </div>
-                    <div class="overflow-hidden">
-                        <p class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ $pdfFile->getClientOriginalName() }}</p>
-                        <p class="text-[10px] text-gray-500 uppercase">{{ round($pdfFile->getSize() / 1024, 2) }} KB</p>
-                    </div>
+                    </button>
                 </div>
-                <button wire:click="$set('pdfFile', null)" class="text-gray-400 hover:text-red-500">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                    </svg>
+                <button
+                    wire:click="parsePdf"
+                    wire:loading.attr="disabled"
+                    class="w-full py-2.5 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                    <span wire:loading.remove wire:target="parsePdf">PROSES FILE SEKARANG</span>
+                    <span wire:loading wire:target="parsePdf" class="flex items-center gap-2">
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        MENGOLAH DATA...
+                    </span>
                 </button>
             </div>
             @endif
@@ -123,33 +146,40 @@
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-[10px] text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0 z-10">
                     <tr>
-                        <th class="px-6 py-4">Nama (Hasil Deteksi)</th>
+                        <th class="px-6 py-4">NIP</th>
+                        <th class="px-6 py-4">Nama</th>
+                        <th class="px-6 py-4">Unit Kerja</th>
                         <th class="px-6 py-4">Tanggal</th>
                         <th class="px-6 py-4">Kode</th>
-                        <th class="px-6 py-4">Baris Raw</th>
+                        <th class="px-6 py-4">Jam In/Out</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @forelse($previewData as $index => $row)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4 font-mono text-xs">{{ $row['nip'] }}</td>
                         <td class="px-6 py-4">
                             <input type="text" wire:model="previewData.{{ $index }}.nama" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 font-bold">
                         </td>
+                        <td class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase">{{ $row['unit'] }}</td>
                         <td class="px-6 py-4">
                             <input type="date" wire:model="previewData.{{ $index }}.tanggal" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
                         </td>
                         <td class="px-6 py-4">
                             <select wire:model="previewData.{{ $index }}.kode" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 font-black uppercase">
+                                <option value="HN">HN</option>
                                 <option value="TK">TK</option>
                                 <option value="TM">TM</option>
-                                <option value="PC">PC</option>
                                 <option value="TMDHM">TMDHM</option>
-                                <option value="S">S</option>
-                                <option value="I">I</option>
+                                <option value="PC">PC</option>
+                                <option value="LN">LN</option>
+                                <option value="LJ">LJ</option>
                             </select>
                         </td>
-                        <td class="px-6 py-4">
-                            <span class="text-[10px] text-gray-400 font-mono italic block max-w-xs truncate">{{ $row['raw'] }}</span>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-[10px] font-black {{ $row['jam_masuk'] ? 'text-blue-600' : 'text-gray-300' }}">{{ $row['jam_masuk'] ?: '--:--' }}</span>
+                            <span class="text-gray-300 mx-1">/</span>
+                            <span class="text-[10px] font-black {{ $row['jam_pulang'] ? 'text-emerald-600' : 'text-gray-300' }}">{{ $row['jam_pulang'] ?: '--:--' }}</span>
                         </td>
                     </tr>
                     @empty

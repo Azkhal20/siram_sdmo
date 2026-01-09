@@ -11,7 +11,7 @@ return new class extends Migration
         // 1. Tabel Kedeputian
         Schema::create('kedeputians', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_kedeputian'); // Contoh: Kedeputian Sinka, Mutasi, dll.
+            $table->string('nama'); // Contoh: Kedeputian Sinka, Mutasi, dll.
             $table->timestamps();
         });
 

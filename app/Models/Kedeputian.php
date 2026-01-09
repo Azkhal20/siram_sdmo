@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Kedeputian extends Model
 {
-    protected $fillable = ['nama_kedeputian'];
+    protected $fillable = ['nama'];
 
     public function pesertaMagang(): HasMany
     {

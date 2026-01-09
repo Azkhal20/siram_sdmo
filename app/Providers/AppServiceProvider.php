@@ -19,6 +19,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Only override if accessed via a subfolder (XAMPP style)
+        $root = request()->getBasePath();
+
+        if (!empty($root) && $root !== '/') {
+            \Livewire\Livewire::setUpdateRoute(function ($handle) use ($root) {
+                return \Illuminate\Support\Facades\Route::post($root . '/livewire/update', $handle);
+            });
+        }
     }
 }

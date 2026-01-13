@@ -7,11 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Kedeputian extends Model
 {
-    // Nama tabel sesuai di database
-    protected $table = 'kedeputians';
-
-    // Field yang bisa diisi massal
-    protected $fillable = ['nama_kedeputian'];
+    protected $fillable = ['nama'];
 
     // Relasi ke peserta magang (one-to-many)
     public function pesertaMagang(): HasMany

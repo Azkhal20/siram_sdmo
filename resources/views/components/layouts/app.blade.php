@@ -139,7 +139,7 @@
                         </svg>
                     </button>
                     <ul x-show="open && !isCollapsed" x-transition class="py-2 space-y-1 ms-4 border-l border-gray-100 dark:border-gray-700">
-                        <li><a href="{{ route('analisis.statistik') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg ps-4 group hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm {{ request()->routeIs('analisis.statistik') ? 'text-blue-600 font-bold' : 'text-gray-600 dark:text-gray-400' }}">Statistik Kode</a></li>
+                        <li><a href="{{ route('analisis.statistik') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg ps-4 group hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm {{ request()->routeIs('analisis.statistik') ? 'text-blue-600 font-bold' : 'text-gray-600 dark:text-gray-400' }}">Statistik Kehadiran</a></li>
                         <li><a href="#" class="flex items-center w-full p-2 transition duration-75 rounded-lg ps-4 group hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm text-gray-600 dark:text-gray-400">Log Aktivitas</a></li>
                     </ul>
                 </li>

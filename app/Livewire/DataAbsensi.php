@@ -20,13 +20,23 @@ class DataAbsensi extends Component
     public $previewData = [];
     public $isProcessing = false;
     public $showPreview = false;
+    public $selectedKedeputian = '';
+    public $kedeputianList = [];
+
+    public function mount()
+    {
+        $this->kedeputianList = Kedeputian::orderBy('nama')->get();
+    }
 
     public function updatedPdfFile()
     {
         Log::info('File updated: ' . ($this->pdfFile ? $this->pdfFile->getClientOriginalName() : 'NULL'));
 
         $this->validate([
+            'selectedKedeputian' => 'required',
             'pdfFile' => 'required|mimes:pdf|max:20480',
+        ], [
+            'selectedKedeputian.required' => 'Mohon pilih Kedeputian terlebih dahulu.',
         ]);
 
         $this->parsePdf();
@@ -53,19 +63,14 @@ class DataAbsensi extends Component
             Log::info('PDF Pages Found: ' . count($pages));
 
             $allParsedResults = [];
+            $globalIndex = 0; // Index counter for binding
 
             foreach ($pages as $index => $page) {
                 $text = $page->getText();
-                // Normalize text: replace multiple spaces/tabs with single space
                 $text = preg_replace('/\s+/', ' ', $text);
-                $lines = explode(' ', $text); // Try splitting by space for very messy text
 
-                // Also keep the line-by-line version for structured table reading
                 $structuredLines = explode("\n", $page->getText());
 
-                Log::info("Page $index text block: " . substr($text, 0, 500));
-
-                // --- 1. Extract Header Context (Page-level) ---
                 $nip = 'N/A';
                 $nama = 'Peserta Tidak Terdeteksi';
                 $unitKerja = 'Unit Kerja Tidak Terdeteksi';
@@ -77,22 +82,17 @@ class DataAbsensi extends Component
                     if (preg_match('/Unit Kerja\s*:\s*([^\n:]+)/i', $sLine, $m)) $unitKerja = trim($m[1]);
                 }
 
-                // --- 2. Extract Table Rows (Date-based) ---
                 foreach ($structuredLines as $line) {
                     $line = trim($line);
 
-                    // Regex for DD-MM-YYYY or DD/MM/YYYY
                     if (preg_match('/(\d{2}[\-\/]\d{2}[\-\/]\d{4})/', $line, $dateMatches)) {
                         $tanggalRaw = $dateMatches[1];
                         $tanggalStr = str_replace('/', '-', $tanggalRaw);
 
-                        // Now find the Attendance Code in this line
-                        // Possible codes: TK, TM, PC, TMDHM, HN, LN, LJ, S, I, DL, C
                         $codesPattern = '/\b(TK|TM|PC|TMDHM|HN|LN|LJ|S|I|DL|C)\b/i';
                         if (preg_match($codesPattern, $line, $codeMatches)) {
-                            $kode = strtoupper($codeMatches[1]);
+                            $kehadiran = strtoupper($codeMatches[1]);
 
-                            // Extract times (HH:MM)
                             preg_match_all('/(\d{2}:\d{2})/', $line, $timeMatches);
                             $times = $timeMatches[1] ?? [];
 
@@ -100,10 +100,10 @@ class DataAbsensi extends Component
                             $jamPulang = null;
                             $menitTelat = 0;
 
-                            if ($kode === 'HN') {
+                            if ($kehadiran === 'HN') {
                                 $jamMasuk = $times[0] ?? null;
                                 $jamPulang = $times[1] ?? null;
-                            } elseif ($kode === 'TMDHM') {
+                            } elseif ($kehadiran === 'TMDHM') {
                                 $jamPulang = $times[0] ?? null;
                                 $telatStr = $times[1] ?? '00:00';
                                 $menitTelat = $this->timeToMinutes($telatStr);
@@ -112,20 +112,22 @@ class DataAbsensi extends Component
                                     $jamMasuk = $times[0];
                                     $jamPulang = $times[1];
                                 } elseif (count($times) === 1) {
-                                    if ($kode === 'TM') $menitTelat = $this->timeToMinutes($times[0]);
+                                    if ($kehadiran === 'TM') $menitTelat = $this->timeToMinutes($times[0]);
                                     else $jamMasuk = $times[0];
                                 }
                             }
 
                             $allParsedResults[] = [
+                                '_index' => $globalIndex++, // Critical for wire:model binding in grouped view
                                 'nip' => $nip,
                                 'nama' => $nama,
                                 'unit' => $unitKerja,
                                 'tanggal' => Carbon::parse($tanggalStr)->format('Y-m-d'),
-                                'kode' => $kode,
+                                'kehadiran' => $kehadiran,
                                 'jam_masuk' => $jamMasuk,
                                 'jam_pulang' => $jamPulang,
                                 'menit_telat' => $menitTelat,
+                                'keterangan' => '', // Initialize empty keterangan
                             ];
                         }
                     }
@@ -133,12 +135,10 @@ class DataAbsensi extends Component
             }
 
             if (empty($allParsedResults)) {
-                Log::error('No results found in PDF parsing.');
-                session()->flash('error', 'Tidak ditemukan data absensi. Pastikan PDF memiliki tabel dengan kolom Tanggal dan Kehadiran.');
+                session()->flash('error', 'Tidak ditemukan data absensi. Pastikan PDF valid.');
             } else {
                 $this->previewData = $allParsedResults;
                 $this->showPreview = true;
-                Log::info('Parsing Success: ' . count($allParsedResults) . ' rows.');
             }
         } catch (\Exception $e) {
             Log::error('Parsing Error: ' . $e->getMessage());
@@ -162,26 +162,32 @@ class DataAbsensi extends Component
         DB::beginTransaction();
         try {
             foreach ($this->previewData as $data) {
-                $kd = Kedeputian::firstOrCreate(['nama' => $data['unit']]);
+                // Ensure date format is correct before saving (in case user edited it weirdly)
+                $tanggal = Carbon::parse($data['tanggal'])->format('Y-m-d');
 
                 $peserta = PesertaMagang::updateOrCreate(
                     ['nomor_induk' => $data['nip']],
-                    ['nama' => $data['nama'], 'kedeputian_id' => $kd->id]
+                    [
+                        'nama' => $data['nama'],
+                        'kedeputian_id' => $this->selectedKedeputian,
+                        'unit_kerja_text' => $data['unit']
+                    ]
                 );
 
                 Absensi::updateOrCreate(
-                    ['peserta_magang_id' => $peserta->id, 'tanggal' => $data['tanggal']],
+                    ['peserta_magang_id' => $peserta->id, 'tanggal' => $tanggal],
                     [
-                        'kode' => $data['kode'],
+                        'kehadiran' => $data['kehadiran'],
                         'jam_masuk' => $data['jam_masuk'],
                         'jam_pulang' => $data['jam_pulang'],
                         'menit_telat' => $data['menit_telat'],
+                        'keterangan' => $data['keterangan'] ?? null, // Save keterangan
                     ]
                 );
             }
             DB::commit();
-            session()->flash('success', 'Berhasil menyimpan ' . count($this->previewData) . ' data.');
-            $this->reset(['pdfFile', 'previewData', 'showPreview']);
+            session()->flash('success', 'Berhasil menyimpan ' . count($this->previewData) . ' data ke Kedeputian terpilih.');
+            $this->reset(['pdfFile', 'previewData', 'showPreview', 'selectedKedeputian']);
         } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('error', 'Gagal menyimpan: ' . $e->getMessage());

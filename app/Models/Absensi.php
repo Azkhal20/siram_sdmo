@@ -10,11 +10,11 @@ class Absensi extends Model
     protected $fillable = [
         'peserta_magang_id',
         'tanggal',
-        'kode',
+        'kehadiran',
         'jam_masuk',
         'jam_pulang',
         'menit_telat',
-        'keterangan'
+        'keterangan', // Added to fillable
     ];
 
     protected $casts = [

@@ -31,7 +31,7 @@
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 font-black">
+                <thead class="text-[12px] font-black uppercase bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
                     <tr>
                         <th class="px-6 py-4">NIP/No. Induk</th>
                         <th class="px-6 py-4">Nama Peserta</th>
@@ -40,7 +40,7 @@
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
                     @foreach($pesertas as $p)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all">
                         <td class="px-6 py-4 font-black text-gray-900 dark:text-white uppercase tracking-tighter">{{ $p->no_induk }}</td>

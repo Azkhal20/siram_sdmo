@@ -83,8 +83,8 @@
                                 <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">{{ $abs->pesertaMagang->nama }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $abs->tanggal->format('d M Y') }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="{{ $this->getBadgeClass($abs->kode) }} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
-                                        {{ $abs->kode }}
+                                    <span class="{{ $this->getBadgeClass($abs->kehadiran) }} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                                        {{ $abs->kehadiran }}
                                     </span>
                                 </td>
                             </tr>

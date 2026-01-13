@@ -5,7 +5,7 @@
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Laporan menyeluruh data kehadiran peserta magang.</p>
         </div>
         <div class="flex gap-2">
-            <button class="inline-flex items-center px-5 py-2.5 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-black rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+            <button wire:click="exportExcel" class="inline-flex items-center px-5 py-2.5 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-black rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
                 <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
@@ -50,7 +50,7 @@
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 font-black tracking-tight">
+                <thead class="text-[12px] font-black uppercase bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
                     <tr>
                         <th class="px-6 py-4 cursor-pointer hover:text-blue-600 transition-colors" wire:click="sortBy('id')">
                             <div class="flex items-center gap-1"># @if($sortField === 'id') <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">{!! $sortDirection === 'asc' ? '
@@ -66,13 +66,13 @@
                                     <path d="M5 10l5 5 5-5H5z" />' !!}
                                 </svg> @endif</div>
                         </th>
-                        <th class="px-6 py-4">Kode</th>
-                        <th class="px-6 py-4">Masuk</th>
-                        <th class="px-6 py-4">Pulang</th>
+                        <th class="px-6 py-4 text-center">Kehadiran</th>
+                        <th class="px-6 py-4 text-center">Masuk</th>
+                        <th class="px-6 py-4 text-center">Pulang</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
                     @forelse($absensis as $abs)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group">
                         <td class="px-6 py-4 font-bold text-gray-400">{{ $abs->id }}</td>
@@ -90,13 +90,13 @@
                         <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600 dark:text-gray-400">
                             {{ $abs->tanggal->format('d M Y') }}
                         </td>
-                        <td class="px-6 py-4">
-                            <span class="{{ $this->getBadgeClass($abs->kode) }} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
-                                {{ $abs->kode }}
+                        <td class="px-6 py-4 text-center">
+                            <span class="{{ $this->getBadgeClass($abs->kehadiran) }} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                                {{ $abs->kehadiran }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 font-mono text-xs">{{ $abs->jam_masuk ?? '--:--' }}</td>
-                        <td class="px-6 py-4 font-mono text-xs">{{ $abs->jam_pulang ?? '--:--' }}</td>
+                        <td class="px-6 py-4 font-mono text-xs text-center">{{ $abs->jam_masuk ?? '--:--' }}</td>
+                        <td class="px-6 py-4 font-mono text-xs text-center">{{ $abs->jam_pulang ?? '--:--' }}</td>
                         <td class="px-6 py-4 text-center">
                             <button class="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,10 +123,23 @@
                 </tbody>
             </table>
         </div>
-        @if($absensis->hasPages())
-        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
-            {{ $absensis->links() }}
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">Menampilkan</span>
+                <select wire:model.live="perPage" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2 font-bold cursor-pointer transition-colors hover:border-blue-500">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">per halaman</span>
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ $absensis->currentPage() }} dari {{ $absensis->lastPage() }}</span>
+                {{ $absensis->links(data: ['scrollTo' => false]) }}
+            </div>
         </div>
-        @endif
     </div>
 </div>

@@ -7,18 +7,18 @@ use App\Models\PesertaMagang;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 
-class StatistikKode extends Component
+class StatistikKehadiran extends Component
 {
     public function render()
     {
         // Statistik per kategori
-        $stats = Absensi::select('kode', DB::raw('count(*) as total'))
-            ->groupBy('kode')
+        $stats = Absensi::select('kehadiran', DB::raw('count(*) as total'))
+            ->groupBy('kehadiran')
             ->get()
-            ->pluck('total', 'kode');
+            ->pluck('total', 'kehadiran');
 
         // Top 5 Peserta dengan TK (Tanpa Keterangan) terbanyak
-        $topTK = Absensi::where('kode', 'TK')
+        $topTK = Absensi::where('kehadiran', 'TK')
             ->select('peserta_magang_id', DB::raw('count(*) as count'))
             ->groupBy('peserta_magang_id')
             ->orderBy('count', 'desc')
@@ -27,7 +27,7 @@ class StatistikKode extends Component
             ->get();
 
         // Top 5 Peserta dengan TM (Telat Masuk) terbanyak
-        $topTM = Absensi::where('kode', 'TM')
+        $topTM = Absensi::where('kehadiran', 'TM')
             ->select('peserta_magang_id', DB::raw('count(*) as count'))
             ->groupBy('peserta_magang_id')
             ->orderBy('count', 'desc')
@@ -35,7 +35,7 @@ class StatistikKode extends Component
             ->take(5)
             ->get();
 
-        return view('livewire.statistik-kode', [
+        return view('livewire.statistik-kehadiran', [
             'stats' => $stats,
             'topTK' => $topTK,
             'topTM' => $topTM,

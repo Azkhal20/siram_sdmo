@@ -14,14 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Admin SDMO',
-            'email' => 'admin@bkn.go.id',
-            'password' => bcrypt('password'),
-        ]);
-
         $kedeputians = [
             "Sektetariat Utama (Sestama)",
             "Kedeputian Bidang Penyelenggaraan Layanan Manajemen ASN (PLM)",
@@ -46,7 +38,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($kedeputians as $nama) {
-            Kedeputian::create(['nama' => $nama]);
+            // Gunakan firstOrCreate agar tidak menduplikat data yang sudah ada
+            Kedeputian::firstOrCreate(['nama' => $nama]);
         }
     }
 }

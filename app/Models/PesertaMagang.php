@@ -10,9 +10,14 @@ class PesertaMagang extends Model
 {
     protected $table = 'peserta_magang';
 
-    protected $fillable = ['nama', 'kedeputian_id'];
+    protected $fillable = [
+        'nama',
+        'nomor_induk',
+        'kedeputian_id',
+        'unit_kerja_text' // ✅ DITAMBAHKAN
+    ];
 
-    public function absensi(): HasMany
+    public function absensis(): HasMany // ✅ Plural untuk konsistensi
     {
         return $this->hasMany(Absensi::class, 'peserta_magang_id');
     }

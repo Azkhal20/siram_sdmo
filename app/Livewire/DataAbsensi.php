@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Absensi;
 use App\Models\Kedeputian;
 use App\Models\PesertaMagang;
+use App\Models\ActivityLog;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Smalot\PdfParser\Parser;
@@ -63,7 +64,7 @@ class DataAbsensi extends Component
             Log::info('PDF Pages Found: ' . count($pages));
 
             $allParsedResults = [];
-            $globalIndex = 0; // Index counter for binding
+            $globalIndex = 0;
 
             foreach ($pages as $index => $page) {
                 $text = $page->getText();
@@ -118,7 +119,7 @@ class DataAbsensi extends Component
                             }
 
                             $allParsedResults[] = [
-                                '_index' => $globalIndex++, // Critical for wire:model binding in grouped view
+                                '_index' => $globalIndex++,
                                 'nip' => $nip,
                                 'nama' => $nama,
                                 'unit' => $unitKerja,
@@ -127,7 +128,7 @@ class DataAbsensi extends Component
                                 'jam_masuk' => $jamMasuk,
                                 'jam_pulang' => $jamPulang,
                                 'menit_telat' => $menitTelat,
-                                'keterangan' => '', // Initialize empty keterangan
+                                'keterangan' => '',
                             ];
                         }
                     }
@@ -162,7 +163,6 @@ class DataAbsensi extends Component
         DB::beginTransaction();
         try {
             foreach ($this->previewData as $data) {
-                // Ensure date format is correct before saving (in case user edited it weirdly)
                 $tanggal = Carbon::parse($data['tanggal'])->format('Y-m-d');
 
                 $peserta = PesertaMagang::updateOrCreate(
@@ -181,11 +181,23 @@ class DataAbsensi extends Component
                         'jam_masuk' => $data['jam_masuk'],
                         'jam_pulang' => $data['jam_pulang'],
                         'menit_telat' => $data['menit_telat'],
-                        'keterangan' => $data['keterangan'] ?? null, // Save keterangan
+                        'keterangan' => $data['keterangan'] ?? null,
                     ]
                 );
             }
             DB::commit();
+
+            // ✅ CATAT LOG AKTIVITAS
+            $kedeputian = Kedeputian::find($this->selectedKedeputian);
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'Import Absensi',
+                'model_type' => 'Absensi',
+                'model_id' => null,
+                'description' => 'Import ' . count($this->previewData) . ' data absensi dari PDF ke Kedeputian: ' . ($kedeputian->nama ?? 'Unknown'),
+                'ip_address' => request()->ip(),
+            ]);
+
             session()->flash('success', 'Berhasil menyimpan ' . count($this->previewData) . ' data ke Kedeputian terpilih.');
             $this->reset(['pdfFile', 'previewData', 'showPreview', 'selectedKedeputian']);
         } catch (\Exception $e) {

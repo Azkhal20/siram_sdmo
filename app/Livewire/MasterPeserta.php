@@ -72,6 +72,17 @@ class MasterPeserta extends Component
     {
         PesertaMagang::findOrFail($id)->delete();
         session()->flash('message', 'Data berhasil dihapus.');
+
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'Delete Peserta',
+            'model_type' => 'PesertaMagang',
+            'model_id' => $id,
+            'description' => 'Menghapus data peserta: ' . $namaPeserta,
+            'ip_address' => request()->ip(),
+        ]);
+
+
     }
 
     public function render()

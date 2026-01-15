@@ -11,9 +11,15 @@ class LogAktivitas extends Component
     use WithPagination;
 
     public $search = '';
-    public $perPage = 15;
+    public $perPage = 10;
 
+    // Reset pagination saat search atau perPage berubah
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
     {
         $this->resetPage();
     }
@@ -21,13 +27,15 @@ class LogAktivitas extends Component
     public function render()
     {
         $logs = ActivityLog::with('user')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('action', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%');
+                    ->orWhere('description', 'like', '%' . $this->search . '%');
             })
             ->latest()
             ->paginate($this->perPage);
 
-        return view('livewire.log-aktivitas', ['logs' => $logs]);
+        return view('livewire.log-aktivitas', [
+            'logs' => $logs,
+        ]);
     }
 }

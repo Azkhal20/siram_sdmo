@@ -43,7 +43,7 @@
         <table class="min-w-full text-sm">
             <thead>
                 <tr class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">No</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Keterangan</th>
@@ -52,18 +52,21 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                @forelse ($logs as $log)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td class="px-6 py-4 font-mono text-gray-500 dark:text-gray-400">{{ $log->id }}</td>
+                @forelse ($logs as $index => $log)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
+                        {{-- Nomor urut: 1, 2, 3, ... dari atas ke bawah --}}
+                        <td class="px-6 py-4 font-mono text-gray-500 dark:text-gray-400">
+                            {{ ($logs->currentPage() - 1) * $logs->perPage() + $index + 1 }}
+                        </td>
                         <td class="px-6 py-4 font-semibold text-gray-900 dark:text-white">{{ $log->user->name ?? 'Guest' }}</td>
                         <td class="px-6 py-4">
                             @php
                                 $actionColor = match(true) {
-                                    str_contains($log->action, 'Create') => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-                                    str_contains($log->action, 'Update') => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                                    str_contains($log->action, 'Delete') => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-                                    str_contains($log->action, 'Import') => 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-                                    str_contains($log->action, 'Export') => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+                                    str_contains(strtolower($log->action), 'create') => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+                                    str_contains(strtolower($log->action), 'update') => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                                    str_contains(strtolower($log->action), 'delete') => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+                                    str_contains(strtolower($log->action), 'import') => 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+                                    str_contains(strtolower($log->action), 'export') => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
                                     default => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
                                 };
                             @endphp
@@ -71,9 +74,9 @@
                                 {{ $log->action }}
                             </span>
                         </td>
-            <td class="px-6 py-4 text-gray-700 dark:text-gray-300 max-w-lg" style="white-space: normal;">
-    {{ $log->description }}
-</td>
+                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300 max-w-lg" style="white-space: normal;">
+                            {{ $log->description }}
+                        </td>
                         <td class="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-500">{{ $log->ip_address }}</td>
                         <td class="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-500 whitespace-nowrap">
                             {{ $log->created_at->format('d M Y H:i:s') }}

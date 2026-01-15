@@ -32,6 +32,7 @@ class LogAktivitas extends Component
                     ->orWhere('description', 'like', '%' . $this->search . '%');
             })
             ->latest()
+            ->orderBy('created_at', 'desc')
             ->paginate($this->perPage);
 
         return view('livewire.log-aktivitas', [

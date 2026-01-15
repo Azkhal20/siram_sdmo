@@ -6,6 +6,8 @@ use App\Models\PesertaMagang;
 use App\Models\Kedeputian;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
 
 class MasterPeserta extends Component
 {
@@ -40,27 +42,47 @@ class MasterPeserta extends Component
         $this->showModal = true;
     }
 
-    public function save()
-    {
-        $this->validate();
+    public function save(): void
+{
+    $this->validate();
 
-        PesertaMagang::updateOrCreate(
-            ['id' => $this->pesertaId],
-            [
-                'nama' => $this->nama,
-                'nomor_induk' => $this->nomor_induk,
-                'kedeputian_id' => $this->kedeputian_id,
-            ]
-        );
+    $peserta = PesertaMagang::updateOrCreate(
+        ['id' => $this->pesertaId],
+        [
+            'nama' => $this->nama,
+            'nomor_induk' => $this->nomor_induk,
+            'kedeputian_id' => $this->kedeputian_id,
+        ]
+    );
 
-        session()->flash('message', $this->pesertaId ? 'Data berhasil diupdate.' : 'Data berhasil ditambah.');
-        $this->showModal = false;
-    }
+    ActivityLog::create([
+        'user_id' => auth()->id(),
+        'action' => $this->pesertaId ? 'Update Peserta' : 'Create Peserta',
+        'model_type' => 'PesertaMagang',
+        'model_id' => $peserta->id,
+        'description' => 'Mengubah data peserta: ' . $peserta->nama,
+        'ip_address' => request()->ip(),
+    ]);
+
+    session()->flash('message', $this->pesertaId ? 'Data berhasil diupdate.' : 'Data berhasil ditambah.');
+    $this->showModal = false;
+}
 
     public function delete($id)
     {
         PesertaMagang::findOrFail($id)->delete();
         session()->flash('message', 'Data berhasil dihapus.');
+
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'Delete Peserta',
+            'model_type' => 'PesertaMagang',
+            'model_id' => $id,
+            'description' => 'Menghapus data peserta: ' . $namaPeserta,
+            'ip_address' => request()->ip(),
+        ]);
+
+
     }
 
     public function render()

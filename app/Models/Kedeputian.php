@@ -9,8 +9,9 @@ class Kedeputian extends Model
 {
     protected $fillable = ['nama'];
 
+    // Relasi ke peserta magang (one-to-many)
     public function pesertaMagang(): HasMany
     {
-        return $this->hasMany(PesertaMagang::class);
+        return $this->hasMany(PesertaMagang::class, 'kedeputian_id');
     }
 }

@@ -4,13 +4,23 @@ namespace App\Livewire;
 
 use App\Models\Kedeputian;
 use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class MasterKedeputian extends Component
 {
+    use WithPagination;
+
     public $nama;
     public $kedeputianId;
+    public $perPage = 9;
     public $showModal = false;
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
 
     public function create()
     {
@@ -39,7 +49,7 @@ class MasterKedeputian extends Component
 
         // ✅ CATAT LOG AKTIVITAS
         ActivityLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'action' => $isUpdate ? 'Update Kedeputian' : 'Create Kedeputian',
             'model_type' => 'Kedeputian',
             'model_id' => $kedeputian->id,
@@ -60,7 +70,7 @@ class MasterKedeputian extends Component
 
         // ✅ CATAT LOG AKTIVITAS
         ActivityLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'action' => 'Delete Kedeputian',
             'model_type' => 'Kedeputian',
             'model_id' => $id,
@@ -74,7 +84,7 @@ class MasterKedeputian extends Component
     public function render()
     {
         return view('livewire.master-kedeputian', [
-            'kedeputians' => Kedeputian::withCount('pesertaMagang')->get(),
+            'kedeputians' => Kedeputian::withCount('pesertaMagang')->paginate($this->perPage),
         ]);
     }
 }

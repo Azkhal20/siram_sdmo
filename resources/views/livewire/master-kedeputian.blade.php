@@ -40,8 +40,8 @@
                     </button>
                 </div>
             </div>
-            <h4 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mb-1">{{ $kd->nama }}</h4>
-            <div class="flex items-center gap-2 text-xs font-bold text-gray-400">
+            <h4 class="text-[16px] font-black text-gray-900 dark:text-white uppercase tracking-tight mb-1">{{ $kd->nama }}</h4>
+            <div class="flex items-center gap-2 text-sm font-bold text-gray-400">
                 <span class="text-blue-600 dark:text-blue-400">{{ $kd->peserta_magang_count }}</span> Peserta Terdaftar
             </div>
         </div>
@@ -54,7 +54,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
             </div>
-            <span class="text-sm font-black uppercase tracking-widest">Tambah Unit Baru</span>
+            <span class="text-xs font-black uppercase tracking-widest">Tambah Unit Baru</span>
         </button>
     </div>
 
@@ -73,7 +73,7 @@
             <form wire:submit.prevent="save" class="p-6 space-y-5">
                 <div>
                     <label class="block mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Nama Kedeputian / Unit</label>
-                    <input wire:model="nama" type="text" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-4 font-black uppercase" placeholder="Contoh: Kedeputian SINKA...">
+                    <input wire:model="nama" type="text" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-300 dark:text-white text-xs rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-4 font-black uppercase" placeholder="Contoh: Kedeputian SINKA...">
                     @error('nama') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 <div class="pt-4 flex gap-3">

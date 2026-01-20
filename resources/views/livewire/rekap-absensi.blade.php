@@ -28,7 +28,7 @@
             </div>
             <div>
                 <label class="block mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Kedeputian</label>
-                <select wire:model.live="filterKedeputian" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-bold">
+                <select wire:model.live="filterKedeputian" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-semibold">
                     <option value="">Semua Kedeputian</option>
                     @foreach($kedeputians as $kd)
                     <option value="{{ $kd->id }}">{{ $kd->nama }}</option>
@@ -37,29 +37,23 @@
             </div>
             <div>
                 <label class="block mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Dari Tanggal</label>
-                <input wire:model.live="fromDate" type="date" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-bold">
+                <input wire:model.live="fromDate" type="date" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-semibold">
             </div>
             <div>
                 <label class="block mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Sampai Tanggal</label>
-                <input wire:model.live="toDate" type="date" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-bold">
+                <input wire:model.live="toDate" type="date" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-semibold">
             </div>
         </div>
     </div>
 
     <!-- Table -->
-    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-sm overflow-hidden min-w-full">
+        <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+            <table class="w-full min-w-[1200px] text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-[12px] font-black uppercase bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
                     <tr>
-                        <th class="px-6 py-4 cursor-pointer hover:text-blue-600 transition-colors" wire:click="sortBy('id')">
-                            <div class="flex items-center gap-1"># @if($sortField === 'id') <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">{!! $sortDirection === 'asc' ? '
-                                    <path d="M5 10l5-5 5 5H5z" />' : '
-                                    <path d="M5 10l5 5 5-5H5z" />' !!}
-                                </svg> @endif</div>
-                        </th>
-                        <th class="px-6 py-4">Nama</th>
-                        <th class="px-6 py-4">Kedeputian</th>
+                        <th class="px-6 py-4">No</th>
+                        <th class="px-6 py-4">Nama Peserta</th>
                         <th class="px-6 py-4 cursor-pointer hover:text-blue-600 transition-colors" wire:click="sortBy('tanggal')">
                             <div class="flex items-center gap-1">Tanggal @if($sortField === 'tanggal') <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">{!! $sortDirection === 'asc' ? '
                                     <path d="M5 10l5-5 5 5H5z" />' : '
@@ -69,23 +63,26 @@
                         <th class="px-6 py-4 text-center">Kehadiran</th>
                         <th class="px-6 py-4 text-center">Masuk</th>
                         <th class="px-6 py-4 text-center">Pulang</th>
+                        <th class="px-6 py-4 text-center">Telat Masuk</th>
+                        <th class="px-6 py-4 text-center">Pulang Cepat</th>
+                        <th class="px-6 py-4 text-left">Keterangan</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
                     @forelse($absensis as $abs)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group">
-                        <td class="px-6 py-4 font-bold text-gray-400">{{ $abs->id }}</td>
-                        <td class="px-6 py-4">
-                            <div class="flex flex-col">
-                                <span class="font-bold text-gray-900 dark:text-white">{{ $abs->pesertaMagang->nama }}</span>
-                                <span class="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{{ $abs->pesertaMagang->no_induk ?? 'PM-000'.$abs->pesertaMagang->id }}</span>
-                            </div>
+                        <td class="px-6 py-4 font-bold text-gray-400">
+                            {{ ($absensis->currentPage() - 1) * $absensis->perPage() + $loop->iteration }}
                         </td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
-                                {{ $abs->pesertaMagang->kedeputian->nama }}
-                            </span>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $abs->pesertaMagang->nama }}</span>
+                                <span class="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{{ $abs->pesertaMagang->nomor_induk ?? 'PM-000'.$abs->pesertaMagang->id }}</span>
+                                <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded w-fit">
+                                    {{ $abs->pesertaMagang->kedeputian->nama ?? '-' }}
+                                </span>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600 dark:text-gray-400">
                             {{ $abs->tanggal->format('d M Y') }}
@@ -95,8 +92,21 @@
                                 {{ $abs->kehadiran }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 font-mono text-xs text-center">{{ $abs->jam_masuk ?? '--:--' }}</td>
-                        <td class="px-6 py-4 font-mono text-xs text-center">{{ $abs->jam_pulang ?? '--:--' }}</td>
+                        <td class="px-6 py-4 font-mono text-xs text-center">
+                            {{ $abs->jam_masuk ? \Carbon\Carbon::parse($abs->jam_masuk)->format('H:i') : '--:--' }}
+                        </td>
+                        <td class="px-6 py-4 font-mono text-xs text-center">
+                            {{ $abs->jam_pulang ? \Carbon\Carbon::parse($abs->jam_pulang)->format('H:i') : '--:--' }}
+                        </td>
+                        <td class="px-6 py-4 font-mono text-xs text-center text-red-500 font-bold">
+                            {{ $abs->telat_masuk }}
+                        </td>
+                        <td class="px-6 py-4 font-mono text-xs text-center text-orange-500 font-bold">
+                            {{ $abs->pulang_cepat }}
+                        </td>
+                        <td class="px-6 py-4 text-xs font-medium text-gray-600 dark:text-gray-400 max-w-[200px]">
+                            {{ $abs->keterangan_detail }}
+                        </td>
                         <td class="px-6 py-4 text-center">
                             <button class="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +117,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-20 text-center">
+                        <td colspan="10" class="px-6 py-20 text-center">
                             <div class="flex flex-col items-center">
                                 <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-full mb-4">
                                     <svg class="w-16 h-16 text-gray-200 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,22 +133,29 @@
                 </tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">Menampilkan</span>
-                <select wire:model.live="perPage" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2 font-bold cursor-pointer transition-colors hover:border-blue-500">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="200">200</option>
-                </select>
-                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">per halaman</span>
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-800/50">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    Results: <span class="font-bold text-gray-900 dark:text-white">{{ $absensis->firstItem() ?? 0 }} - {{ $absensis->lastItem() ?? 0 }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ $absensis->total() }}</span>
+                </span>
+                <div class="relative">
+                    <select wire:model.live="perPage" style="appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: none !important;" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block py-1.5 pl-3 pr-9 font-bold cursor-pointer transition-all shadow-sm hover:border-blue-400">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
             </div>
 
-            <div class="flex items-center gap-2 w-full md:w-auto">
-                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ $absensis->currentPage() }} dari {{ $absensis->lastPage() }}</span>
-                {{ $absensis->links(data: ['scrollTo' => false]) }}
+            <div class="flex items-center justify-end flex-1 w-full md:w-auto">
+                {{ $absensis->links('livewire.custom-pagination') }}
             </div>
         </div>
     </div>

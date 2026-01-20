@@ -87,218 +87,172 @@ class DataAbsensi extends Component
                 foreach ($structuredLines as $line) {
                     $line = trim($line);
 
+                    // Initialize all variables at the start of each line loop to prevent undefined variable errors
+                    $kehadiran = null;
+                    $jamMasuk = null;
+                    $jamPulang = null;
+                    $menitTelat = 0;
+
                     if (preg_match('/(\d{2}[\-\/]\d{2}[\-\/]\d{4})/', $line, $dateMatches)) {
                         $tanggalRaw = $dateMatches[1];
                         $tanggalStr = str_replace('/', '-', $tanggalRaw);
 
-                        // Reset kehadiran for each line processing
-                        $kehadiran = null;
+                        // Regex Strategy:
+                        // Group 1: Sticky Codes (can follow digits/spaces, e.g. 2026TM1, PC1-TMDHM)
+                        // Group 2: Standalone Codes (Strict Word Boundaries, e.g. S, I, C, TK)
+                        $compound = 'PC\s?\d+[\s-]?TMDHM|TM\s?\d+[\s-]?TMDHP|TMDHM|TMDHP';
+                        $concat   = 'TM\d+PC\d+|PC\d+TM\d+';
+                        $simple   = 'TM\s?\d*|PC\s?\d*';
+                        $stickyPart = "{$compound}|{$concat}|{$simple}";
+                        $standalonePart = 'TK|HN|LN|LJ';
 
-                        // Robust Pattern: Match codes that might be attached to dates/numbers or standalone
-                        // Covers: "2024TK", "TM 1", "TM1", "TMDHM", etc.
-                        $codesPattern = '/(?:^|[\s\d])(PC\s?\d+[\s-]?TMDHM|TM\s?\d+[\s-]?TMDHP|TMDHM|TMDHP|TM\s?\d*|PC\s?\d*|TK|HN|LN|LJ|S|I|DL|C)(?:\b|$)/i';
+                        $codesPattern = "/(?:^|[\s\d])({$stickyPart})(?:\b|$)|\b({$standalonePart})\b/i";
 
                         if (preg_match($codesPattern, $line, $codeMatches)) {
-                            // Normalize "TM 1" -> "TM1"
-                            $raw = strtoupper(str_replace(' ', '', $codeMatches[1]));
-                            // Normalize compound logic: ensure dash separator for specific compounds
-                            $kehadiran = str_replace(['PC1TMDHM', 'PC2TMDHM', 'PC3TMDHM', 'PC1 TMDHM'], 'PC1-TMDHM', $raw); // Fallback to PC1-TMDHM if variation found, or better specific replacements if needed
+                            // Determine which group matched
+                            $raw = !empty($codeMatches[1]) ? $codeMatches[1] : ($codeMatches[2] ?? '');
 
-                            // Better generalization:
-                            if (str_contains($raw, 'TMDHM') && str_contains($raw, 'PC')) {
-                                // Extract PC number
-                                preg_match('/PC(\d+)/', $raw, $pcM);
-                                $num = $pcM[1] ?? '1';
-                                $kehadiran = "PC{$num}-TMDHM";
+                            if ($raw) {
+                                // Normalize
+                                $upperRaw = strtoupper(str_replace(' ', '', $raw));
+
+                                // 1. Handle PC1-TMDHM variations
+                                if (str_contains($upperRaw, 'TMD') && str_contains($upperRaw, 'PC')) {
+                                    preg_match('/PC(\d+)/', $upperRaw, $pcM);
+                                    $num = $pcM[1] ?? '1';
+                                    $kehadiran = "PC{$num}-TMDHM";
+                                }
+                                // 2. Handle TM3PC1 concatenated variations
+                                elseif (preg_match('/^(TM\d+)(PC\d+)$/', $upperRaw, $splitM) || preg_match('/^(PC\d+)(TM\d+)$/', $upperRaw, $splitM)) {
+                                    $kehadiran = $upperRaw;
+                                }
+                                // 3. Standard
+                                else {
+                                    $kehadiran = $upperRaw;
+                                }
+
+                                // Specific check for PC number preservation
+                                if (str_contains($upperRaw, 'TMDHM') && str_contains($upperRaw, 'PC') && !str_contains($kehadiran, '-')) {
+                                    preg_match('/PC(\d+)/', $upperRaw, $pcM);
+                                    $num = $pcM[1] ?? '1';
+                                    $kehadiran = "PC{$num}-TMDHM";
+                                }
                             }
                         }
 
+                        // Only proceed if a recognized attendance code is found
                         if ($kehadiran) {
-                            // Skip codes that the user requested to exclude (HN, LN, LJ, and unused S, I, DL, C)
-                            if (in_array($kehadiran, ['HN', 'LN', 'LJ', 'S', 'I', 'DL', 'C'])) {
-                                continue;
-                            }
-
                             preg_match_all('/(\d{2}:\d{2})/', $line, $timeMatches);
-                            $times = $timeMatches[1] ?? [];
+                            $rawTimes = $timeMatches[1] ?? [];
 
-                            $jamMasuk = null;
-                            $jamPulang = null;
-                            $menitTelat = 0;
-
-                            // Robust Time Extraction Logic
-                            $validAttendanceTimes = [];
-                            foreach ($times as $t) {
-                                // Filter out likely durations (e.g. 00:xx) if context suggests detailed codes (TM1-3, PC1-3)
-                                // But keep everything for generic codes.
-                                $validAttendanceTimes[] = $t;
-                            }
-
-                            if ($kehadiran === 'TK') {
+                            // Point 1: Determine clock-time expectations based on the detected Kehadiran code
+                            // Group 1: No clock times expected
+                            if (in_array($kehadiran, ['TK', 'LN', 'LJ', 'S', 'I', 'DL', 'C'])) {
                                 $jamMasuk = null;
                                 $jamPulang = null;
-                            } elseif ($kehadiran === 'TMDHM') {
-                                // only pulang (afternoon)
-                                foreach ($validAttendanceTimes as $t) {
-                                    $h = (int)explode(':', $t)[0];
-                                    if ($h >= 12) {
-                                        $jamPulang = $t;
-                                        break;
-                                    }
-                                }
-                            } elseif ($kehadiran === 'TMDHP') {
-                                // only masuk (morning)
-                                foreach ($validAttendanceTimes as $t) {
-                                    $h = (int)explode(':', $t)[0];
-                                    if ($h < 12) {
-                                        $jamMasuk = $t;
-                                        break;
-                                    }
-                                }
-                            } elseif ($kehadiran === 'HN') {
-                                // Could be [masuk, pulang]
-                                $jamMasuk = $validAttendanceTimes[0] ?? null;
-                                $jamPulang = $validAttendanceTimes[1] ?? null;
-                            } else {
-                                // General Logic (TM, PC, TM1-3, etc)
-                                if (count($validAttendanceTimes) >= 2) {
-                                    $t1 = $validAttendanceTimes[0];
-                                    $t2 = $validAttendanceTimes[1];
+                            }
+                            // Group 2: Only Pulang expected (e.g., missed morning scan)
+                            elseif (str_contains($kehadiran, 'TMDHM') || str_contains($kehadiran, 'PC1-TMDHM')) {
+                                // The FIRST HH:mm appearing on a TMDHM line is the Jam Pulang.
+                                // Subsequent times (like Telat Masuk duration) are ignored.
+                                $jamPulang = $rawTimes[0] ?? null;
+                                $jamMasuk = null;
+                            }
+                            // Group 3: Only Masuk expected (e.g., missed afternoon scan)
+                            elseif (str_contains($kehadiran, 'TMDHP')) {
+                                // The FIRST HH:mm appearing on a TMDHP line is the Jam Masuk.
+                                $jamMasuk = $rawTimes[0] ?? null;
+                                $jamPulang = null;
+                            }
+                            // Group 4: Standard presence expecting both or unknown presence codes
+                            else {
+                                // In BKN reports, clock times appear first, followed by durations (Telat/PC).
+                                // We take the first two matches as Masuk and Pulang.
+                                if (count($rawTimes) >= 2) {
+                                    $jamMasuk  = $rawTimes[0];
+                                    $jamPulang = $rawTimes[1];
+                                } elseif (count($rawTimes) === 1) {
+                                    // Fallback for single scan: use hour to guess if it's morning or afternoon
+                                    $t1 = $rawTimes[0];
                                     $h1 = (int)explode(':', $t1)[0];
-                                    $h2 = (int)explode(':', $t2)[0];
-
-                                    if ($h1 < 12 && $h2 >= 12) {
+                                    if ($h1 < 12) {
                                         $jamMasuk = $t1;
-                                        $jamPulang = $t2;
-                                    } elseif ($h1 < 12 && $h2 < 12) {
-                                        $jamMasuk = $t1; // assume first is masuk
+                                        $jamPulang = null;
                                     } else {
-                                        $jamPulang = $t1; // assume first is pulang
+                                        $jamPulang = $t1;
+                                        $jamMasuk = null;
                                     }
-                                } elseif (count($validAttendanceTimes) === 1) {
-                                    $t1 = $validAttendanceTimes[0];
-                                    $h1 = (int)explode(':', $t1)[0];
-                                    if ($h1 < 12) $jamMasuk = $t1;
-                                    else $jamPulang = $t1;
                                 }
                             }
-                        }
 
-                        // Calculate Telat / Pulang Cepat & Determine Codes for Keterangan
-                        $telatFormatted = '-';
-                        $pulangCepatFormatted = '-';
-                        $tmCode = null;
-                        $pcCode = null;
+                            // Calculate Telat / Pulang Cepat - STRICT SYSTEM CALCULATION
+                            // Ketentuan: Masuk 08:00 WIB, Pulang 16:30 WIB
+                            $telatFormatted = '-';
+                            $pulangCepatFormatted = '-';
 
-                        // Skip calculation for pure TK
-                        if ($kehadiran !== 'TK') {
                             // 1. Telat Masuk Calculation
-                            if ($jamMasuk) {
+                            if ($jamMasuk && !in_array($kehadiran, ['TK', 'LN', 'LJ'])) {
                                 $masukVs = Carbon::parse($jamMasuk);
-                                // Compare against 08:00:00
                                 if ($masukVs->format('H:i:s') > '08:00:00') {
                                     $limitSeconds = 8 * 3600;
                                     $parts = explode(':', $masukVs->format('H:i:s'));
                                     $currentSeconds = ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
                                     $diff = $currentSeconds - $limitSeconds;
-                                    $totalMinutes = intdiv($diff, 60);
-
                                     $telatFormatted = sprintf('%02d:%02d', intdiv($diff, 3600), intdiv($diff % 3600, 60));
-
-                                    if ($totalMinutes > 60) $tmCode = 'TM3';
-                                    elseif ($totalMinutes > 30) $tmCode = 'TM2';
-                                    else $tmCode = 'TM1';
                                 }
-                            } elseif (!in_array($kehadiran, ['HN', 'LN', 'LJ'])) {
-                                // If no jam_masuk and not a leave code, implied TMDHM if it's a workday attendace
-                                $tmCode = 'TMDHM';
                             }
 
                             // 2. Pulang Cepat Calculation
-                            if ($jamPulang) {
+                            if ($jamPulang && !in_array($kehadiran, ['TK', 'LN', 'LJ'])) {
                                 $pulangVs = Carbon::parse($jamPulang);
-                                // Compare against 16:30:00
                                 if ($pulangVs->format('H:i:s') < '16:30:00') {
                                     $limitSeconds = (16 * 3600) + (30 * 60);
                                     $parts = explode(':', $pulangVs->format('H:i:s'));
                                     $currentSeconds = ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
                                     $diff = $limitSeconds - $currentSeconds;
-                                    $totalMinutes = intdiv($diff, 60);
-
                                     $pulangCepatFormatted = sprintf('%02d:%02d', intdiv($diff, 3600), intdiv($diff % 3600, 60));
-
-                                    if ($totalMinutes > 60) $pcCode = 'PC3';
-                                    elseif ($totalMinutes > 30) $pcCode = 'PC2';
-                                    else $pcCode = 'PC1';
                                 }
-                            } elseif ($jamMasuk && !in_array($kehadiran, ['HN', 'LN', 'LJ'])) {
-                                // If yes jam_masuk but no jam_pulang -> implied TMDHP
-                                $pcCode = 'TMDHP';
                             }
+
+                            // 3. Build keterangan - STRICTLY BASED ON KEHADIRAN CODE
+                            $keteranganStr = Absensi::getKeteranganByCode($kehadiran);
+
+                            $allParsedResults[] = [
+                                '_index' => $globalIndex++,
+                                'nip' => $nip,
+                                'nama' => $nama,
+                                'unit' => $unitKerja,
+                                'tanggal' => Carbon::parse($tanggalStr)->format('d-m-Y'),
+                                'kehadiran' => $kehadiran,
+                                'jam_masuk' => $jamMasuk ? Carbon::parse($jamMasuk)->format('H:i') : null,
+                                'jam_pulang' => $jamPulang ? Carbon::parse($jamPulang)->format('H:i') : null,
+                                'menit_telat' => 0,
+                                'telat_formatted' => $telatFormatted,
+                                'pulang_cepat_formatted' => $pulangCepatFormatted,
+                                'keterangan' => $keteranganStr,
+                            ];
                         }
-
-                        // 3. Build keterangan - STRICTLY BASED ON KEHADIRAN COLUMN
-                        // User Request: "Keterangan tinggal ngikutin kehadirannya apa"
-
-                        $descMap = [
-                            'TK'        => 'Tanpa Keterangan',
-                            'TMDHM'     => 'Tidak Absen Masuk',
-                            'TMDHP'     => 'Tidak Absen Pulang',
-                            'PC1-TMDHM' => 'Pulang Cepat Kurang dari 30 menit dan Tidak Absen Masuk',
-                            'TM1'       => 'Terlambat masuk',
-                            'TM2'       => 'Lebih dari 30 Menit',
-                            'TM3'       => 'Lebih dari 1 Jam',
-                            'TM'        => 'Terlambat',
-                            'PC'        => 'Pulang cepat',
-                            'PC1'       => 'Kurang dari 30 Menit',
-                            'PC2'       => 'Lebih dari 30 Menit',
-                            'PC3'       => 'Lebih dari 1 Jam',
-                            'S'         => 'Sakit',
-                            'I'         => 'Izin',
-                            'C'         => 'Cuti',
-                            'DL'        => 'Dinas Luar',
-                            'HN'        => 'Hadir Normal',
-                            'LN'        => 'Lupa Absen Negara',
-                            'LJ'        => 'Lupa Absen Jumat',
-                        ];
-
-                        $cleanKehadiran = str_replace(' ', '', $kehadiran); // e.g. "TM 1" -> "TM1"
-
-                        // Direct mapping: What is in "Kehadiran" column -> "Keterangan"
-                        // No extra logic to add "dan Pulang Cepat" based on time if the code doesn't say so.
-                        if (isset($descMap[$cleanKehadiran])) {
-                            $keteranganStr = $descMap[$cleanKehadiran];
-                        } else {
-                            // If code has no description (e.g. unknown code), use the code itself
-                            $keteranganStr = $cleanKehadiran;
-                        }
-
-                        $allParsedResults[] = [
-                            '_index' => $globalIndex++,
-                            'nip' => $nip,
-                            'nama' => $nama,
-                            'unit' => $unitKerja,
-                            'tanggal' => Carbon::parse($tanggalStr)->format('Y-m-d'),
-                            'kehadiran' => $kehadiran,
-                            'jam_masuk' => $jamMasuk ? Carbon::parse($jamMasuk)->format('H:i') : null,
-                            'jam_pulang' => $jamPulang ? Carbon::parse($jamPulang)->format('H:i') : null,
-                            'menit_telat' => 0,
-                            'telat_formatted' => $telatFormatted,
-                            'pulang_cepat_formatted' => $pulangCepatFormatted,
-                            'keterangan' => $keteranganStr,
-                        ];
                     }
                 }
             }
 
 
-            // Sort by NIP then Tanggal
+
+            // Sort by NIP then Tanggal (Proper Date Comparison)
             usort($allParsedResults, function ($a, $b) {
                 if ($a['nip'] === $b['nip']) {
-                    return strcmp($a['tanggal'], $b['tanggal']);
+                    $da = Carbon::createFromFormat('d-m-Y', $a['tanggal']);
+                    $db = Carbon::createFromFormat('d-m-Y', $b['tanggal']);
+                    return $da <=> $db;
                 }
                 return strcmp($a['nip'], $b['nip']);
             });
+
+            // Re-map after sorting to ensure _index matches the array key for Livewire binding
+            $allParsedResults = collect($allParsedResults)->map(function ($item, $key) {
+                $item['_index'] = $key;
+                return $item;
+            })->toArray();
 
             if (empty($allParsedResults)) {
                 session()->flash('error', 'Tidak ditemukan data absensi. Pastikan PDF valid.');
@@ -328,7 +282,8 @@ class DataAbsensi extends Component
         DB::beginTransaction();
         try {
             foreach ($this->previewData as $data) {
-                $tanggal = Carbon::parse($data['tanggal'])->format('Y-m-d');
+                // Parse date from d-m-Y format as set in parsePdf
+                $tanggal = Carbon::createFromFormat('d-m-Y', $data['tanggal'])->format('Y-m-d');
 
                 $peserta = PesertaMagang::updateOrCreate(
                     ['nomor_induk' => $data['nip']],

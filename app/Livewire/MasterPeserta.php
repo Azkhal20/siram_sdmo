@@ -14,8 +14,19 @@ class MasterPeserta extends Component
     use WithPagination;
 
     public $search = '';
+    public $perPage = 10;
     public $showModal = false;
-    public $pesertaId, $nama, $nomor_induk, $univ, $kedeputian_id;
+    public $pesertaId, $nama, $nomor_induk, $kedeputian_id;
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
 
     public function rules()
     {
@@ -28,7 +39,7 @@ class MasterPeserta extends Component
 
     public function create()
     {
-        $this->reset(['pesertaId', 'nama', 'nomor_induk', 'univ', 'kedeputian_id']);
+        $this->reset(['pesertaId', 'nama', 'nomor_induk', 'kedeputian_id']);
         $this->showModal = true;
     }
 
@@ -43,46 +54,47 @@ class MasterPeserta extends Component
     }
 
     public function save(): void
-{
-    $this->validate();
+    {
+        $this->validate();
 
-    $peserta = PesertaMagang::updateOrCreate(
-        ['id' => $this->pesertaId],
-        [
-            'nama' => $this->nama,
-            'nomor_induk' => $this->nomor_induk,
-            'kedeputian_id' => $this->kedeputian_id,
-        ]
-    );
+        $peserta = PesertaMagang::updateOrCreate(
+            ['id' => $this->pesertaId],
+            [
+                'nama' => $this->nama,
+                'nomor_induk' => $this->nomor_induk,
+                'kedeputian_id' => $this->kedeputian_id,
+            ]
+        );
 
-    ActivityLog::create([
-        'user_id' => auth()->id(),
-        'action' => $this->pesertaId ? 'Update Peserta' : 'Create Peserta',
-        'model_type' => 'PesertaMagang',
-        'model_id' => $peserta->id,
-        'description' => 'Mengubah data peserta: ' . $peserta->nama,
-        'ip_address' => request()->ip(),
-    ]);
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => $this->pesertaId ? 'Update Peserta' : 'Create Peserta',
+            'model_type' => 'PesertaMagang',
+            'model_id' => $peserta->id,
+            'description' => 'Mengubah data peserta: ' . $peserta->nama,
+            'ip_address' => request()->ip(),
+        ]);
 
-    session()->flash('message', $this->pesertaId ? 'Data berhasil diupdate.' : 'Data berhasil ditambah.');
-    $this->showModal = false;
-}
+        session()->flash('message', $this->pesertaId ? 'Data berhasil diupdate.' : 'Data berhasil ditambah.');
+        $this->showModal = false;
+    }
 
     public function delete($id)
     {
-        PesertaMagang::findOrFail($id)->delete();
+        $peserta = PesertaMagang::findOrFail($id);
+        $namaPeserta = $peserta->nama;
+        $peserta->delete();
+
         session()->flash('message', 'Data berhasil dihapus.');
 
         ActivityLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'action' => 'Delete Peserta',
             'model_type' => 'PesertaMagang',
             'model_id' => $id,
             'description' => 'Menghapus data peserta: ' . $namaPeserta,
             'ip_address' => request()->ip(),
         ]);
-
-
     }
 
     public function render()
@@ -91,7 +103,7 @@ class MasterPeserta extends Component
             'pesertas' => PesertaMagang::with('kedeputian')
                 ->where('nama', 'like', '%' . $this->search . '%')
                 ->orWhere('nomor_induk', 'like', '%' . $this->search . '%')
-                ->paginate(10),
+                ->paginate($this->perPage),
             'kedeputians' => Kedeputian::all(),
         ]);
     }

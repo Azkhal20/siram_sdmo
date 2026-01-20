@@ -18,12 +18,17 @@ class LogAktivitas extends Component
         $this->resetPage();
     }
 
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $logs = ActivityLog::with('user')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('action', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%');
+                    ->orWhere('description', 'like', '%' . $this->search . '%');
             })
             ->latest()
             ->paginate($this->perPage);

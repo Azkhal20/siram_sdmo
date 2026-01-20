@@ -74,91 +74,59 @@ class Absensi extends Model
         return '-';
     }
 
-    public function getKeteranganDetailAttribute()
+    public static function getKeteranganByCode($kehadiran)
     {
-        $tmCodeCalc = null;
-        $pcCodeCalc = null;
-
-        // 1. Calculate Codes again based on detailed logic (same as DataAbsensi)
-        if ($this->jam_masuk) {
-            $masuk = \Carbon\Carbon::parse($this->jam_masuk);
-            $batasMasuk = \Carbon\Carbon::parse($this->jam_masuk)->setTime(8, 0, 0);
-            if ($masuk->format('H:i:s') > '08:00:00') {
-                $timeStr = $masuk->format('H:i:s');
-                [$h, $m, $s] = explode(':', $timeStr);
-                $totalSeconds = ($h * 3600) + ($m * 60) + $s;
-                $limitSeconds = 8 * 3600;
-                $diff = $totalSeconds - $limitSeconds;
-                $totalMinutes = intdiv($diff, 60);
-
-                if ($totalMinutes > 60) $tmCodeCalc = 'TM3';
-                elseif ($totalMinutes > 30) $tmCodeCalc = 'TM2';
-                else $tmCodeCalc = 'TM1';
-            }
-        } elseif (!in_array($this->kehadiran, ['HN', 'LN', 'LJ', 'TK'])) {
-            $tmCodeCalc = 'TMDHM';
-        }
-
-        if ($this->jam_pulang) {
-            $pulang = \Carbon\Carbon::parse($this->jam_pulang);
-            $batasPulang = \Carbon\Carbon::parse($this->jam_pulang)->setTime(16, 30, 0);
-            if ($pulang->format('H:i:s') < '16:30:00') {
-                $timeStr = $pulang->format('H:i:s');
-                [$h, $m, $s] = explode(':', $timeStr);
-                $totalSeconds = ($h * 3600) + ($m * 60) + $s;
-                $limitSeconds = (16 * 3600) + (30 * 60);
-                $diff = $limitSeconds - $totalSeconds;
-                $totalMinutes = intdiv($diff, 60);
-
-                if ($totalMinutes > 60) $pcCodeCalc = 'PC3';
-                elseif ($totalMinutes > 30) $pcCodeCalc = 'PC2';
-                else $pcCodeCalc = 'PC1';
-            }
-        } elseif (!in_array($this->kehadiran, ['HN', 'LN', 'LJ', 'TK'])) {
-            $pcCodeCalc = 'TMDHP';
-        }
-
-        // 2. Map Codes to Descriptions (NO CODES SHOWN)
         $descMap = [
-            'TK'        => 'Tanpa Keterangan',
-            'TMDHM'     => 'Tidak Absen Masuk',
-            'TMDHP'     => 'Tidak Absen Pulang',
-            'PC1-TMDHM' => 'Pulang Cepat Kurang dari 30 menit dan Tidak Absen Masuk',
-            'TM1'       => 'Terlambat masuk',
-            'TM2'       => 'Lebih dari 30 Menit',
-            'TM3'       => 'Lebih dari 1 Jam',
+            'TK'        => 'Tanpa keterangan.',
+            'TMDHM'     => 'Tidak absen masuk.',
+            'TMDHP'     => 'Tidak absen pulang.',
+            'PC1-TMDHM' => 'Pulang cepat < 30 menit & tidak absen masuk.',
+            'TM1'       => 'Terlambat masuk < 30 menit.',
+            'TM2'       => 'Terlambat masuk > 30 menit.',
+            'TM3'       => 'Terlambat masuk > 1 jam.',
             'TM'        => 'Terlambat',
             'PC'        => 'Pulang cepat',
-            'PC1'       => 'Kurang dari 30 Menit',
-            'PC2'       => 'Lebih dari 30 Menit',
-            'PC3'       => 'Lebih dari 1 Jam',
-            'S'         => 'Sakit',
-            'I'         => 'Izin',
-            'C'         => 'Cuti',
-            'DL'        => 'Dinas Luar',
+            'PC1'       => 'Pulang cepat < 30 menit.',
+            'PC2'       => 'Pulang cepat > 30 menit.',
+            'PC3'       => 'Pulang cepat > 1 jam.',
+            'HN'        => 'Hadir normal',
+            'LJ'        => 'Libur weekend',
+            'LN'        => 'Libur nasional.',
         ];
 
+        if (!$kehadiran) return '-';
+
+        // Normalize: Remove spaces, dashes, dots. Convert to upper.
+        $cleanCode = strtoupper(str_replace([' ', '-', '.'], '', $kehadiran));
+
+        // Match exact first
+        if (isset($descMap[$cleanCode])) {
+            return $descMap[$cleanCode];
+        }
+
+        // Split into logical components (Longest matches first to prioritize TMDHM over TM)
+        // Note: PC1-TMDHM usually normalized to PC1TMDHM
+        preg_match_all('/TMDHM|TMDHP|PC\d+|TM\d+|TK|HN|LN|LJ|TM|PC/i', $cleanCode, $matches);
+
         $finalDescs = [];
-
-        // Main Attendance Code
-        if (isset($descMap[$this->kehadiran])) {
-            $finalDescs[] = $descMap[$this->kehadiran];
-        } else {
-            $finalDescs[] = $this->kehadiran; // Fallback
-        }
-
-        // Secondary Calculated Codes
-        if (!str_contains($this->kehadiran, 'PC') && $pcCodeCalc) {
-            if (!str_starts_with($pcCodeCalc, 'TMD') && $pcCodeCalc !== $this->kehadiran) {
-                $finalDescs[] = $descMap[$pcCodeCalc] ?? $pcCodeCalc;
+        if (!empty($matches[0])) {
+            foreach ($matches[0] as $part) {
+                $p = strtoupper($part);
+                if (isset($descMap[$p])) {
+                    $finalDescs[] = $descMap[$p];
+                }
             }
         }
-        if (!str_contains($this->kehadiran, 'TM') && $tmCodeCalc) {
-            if (!str_starts_with($tmCodeCalc, 'TMD') && $tmCodeCalc !== $this->kehadiran) {
-                $finalDescs[] = $descMap[$tmCodeCalc] ?? $tmCodeCalc;
-            }
+
+        if (empty($finalDescs)) {
+            return $kehadiran;
         }
 
         return implode(' dan ', array_unique($finalDescs));
+    }
+
+    public function getKeteranganDetailAttribute()
+    {
+        return self::getKeteranganByCode($this->kehadiran);
     }
 }

@@ -149,9 +149,9 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td class="px-6 py-3 w-[15%]">
                                 <div class="relative">
-                                    <input type="date"
+                                    <input type="text"
                                         wire:model="previewData.{{ $row['_index'] }}.tanggal"
-                                        class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white font-mono text-xs font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 p-2 cursor-pointer transition-colors hover:border-blue-400">
+                                        class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white font-mono text-xs font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 p-2 transition-colors hover:border-blue-400">
                                 </div>
                             </td>
                             <td class="px-6 py-2 text-center w-[10%]">
@@ -159,8 +159,6 @@
                                 $classes = match($row['kehadiran']) {
                                 'TK' => 'bg-red-100 text-red-700 border-red-200',
                                 'HN' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                'DL' => 'bg-blue-100 text-blue-700 border-blue-200',
-                                'S', 'I', 'C' => 'bg-teal-100 text-teal-700 border-teal-200',
                                 'TM', 'PC' => 'bg-amber-100 text-amber-700 border-amber-200',
                                 'TMDHM' => 'bg-purple-100 text-purple-700 border-purple-200',
                                 default => 'bg-gray-100 text-gray-700 border-gray-200'

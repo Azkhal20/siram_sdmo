@@ -14,10 +14,10 @@ class PesertaMagang extends Model
         'nama',
         'nomor_induk',
         'kedeputian_id',
-        'unit_kerja_text' // ✅ DITAMBAHKAN
+        'unit_kerja_text'
     ];
 
-    public function absensis(): HasMany // ✅ Plural untuk konsistensi
+    public function absensis(): HasMany
     {
         return $this->hasMany(Absensi::class, 'peserta_magang_id');
     }

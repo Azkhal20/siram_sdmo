@@ -16,26 +16,26 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })
-    ->create();
+    ->registered(function ($app) {
+        if (isset($_SERVER['VERCEL_URL'])) {
+            $storagePath = '/tmp/storage';
+            $app->useStoragePath($storagePath);
 
-if (isset($_SERVER['VERCEL_URL'])) {
-    $storagePath = '/tmp/storage';
-    $app->useStoragePath($storagePath);
+            $dirs = [
+                $storagePath . '/framework/views',
+                $storagePath . '/framework/sessions',
+                $storagePath . '/framework/cache',
+                $storagePath . '/framework/cache/data',
+                $storagePath . '/logs',
+            ];
 
-    // Pastikan semua struktur folder storage ada di /tmp
-    $dirs = [
-        $storagePath . '/framework/views',
-        $storagePath . '/framework/sessions',
-        $storagePath . '/framework/cache',
-        $storagePath . '/framework/cache/data',
-        $storagePath . '/logs',
-    ];
-
-    foreach ($dirs as $dir) {
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            foreach ($dirs as $dir) {
+                if (!is_dir($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+            }
         }
-    }
-}
+    })
+    ->create();
 
 return $app;

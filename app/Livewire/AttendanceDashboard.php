@@ -4,11 +4,48 @@ namespace App\Livewire;
 
 use App\Models\Absensi;
 use App\Models\PesertaMagang;
+use App\Models\Kedeputian;
 use Livewire\Component;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceDashboard extends Component
 {
-    public function getBadgeClass($kode) 
+    public $selectedMonth;
+    public $selectedYear;
+    public $selectedKedeputian = "";
+
+    public function mount()
+    {
+        // Try to find the latest attendance data to set as default view
+        $latest = Absensi::orderBy('tanggal', 'desc')->first();
+
+        if ($latest) {
+            $this->selectedMonth = $latest->tanggal->format('m');
+            $this->selectedYear = $latest->tanggal->format('Y');
+        } else {
+            $this->selectedMonth = date('m');
+            $this->selectedYear = date('Y');
+        }
+    }
+
+    public function getMonths()
+    {
+        return [
+            '01' => 'Januari',
+            '02' => 'Februari',
+            '03' => 'Maret',
+            '04' => 'April',
+            '05' => 'Mei',
+            '06' => 'Juni',
+            '07' => 'Juli',
+            '08' => 'Agustus',
+            '09' => 'September',
+            '10' => 'Oktober',
+            '11' => 'November',
+            '12' => 'Desember'
+        ];
+    }
+    public function getBadgeClass($kode)
     {
         return match ($kode) {
             'TK' => 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400 border border-red-200 dark:border-red-800',
@@ -19,16 +56,76 @@ class AttendanceDashboard extends Component
         };
     }
 
-public function render()
-{
-    return view('livewire.attendance-dashboard', [
-        'stats' => [
-            'total_peserta' => PesertaMagang::count(),
-            'total_tk' => Absensi::where('kehadiran', 'TK')->count(),  // ganti 'kode' => 'kehadiran'
-            'total_tm' => Absensi::where('kehadiran', 'TM')->count(),
-            'total_pc' => Absensi::where('kehadiran', 'PC')->count(),
-        ],
-        'absensis' => Absensi::with('pesertaMagang')->latest()->take(10)->get(),
-    ]);
-}
+    public function render()
+    {
+        $query = Absensi::whereMonth('tanggal', $this->selectedMonth)
+            ->whereYear('tanggal', $this->selectedYear);
+
+        // Apply Kedeputian filter to the base query globally
+        if ($this->selectedKedeputian) {
+            $query->whereHas('pesertaMagang', function ($q) {
+                $q->where('kedeputian_id', $this->selectedKedeputian);
+            });
+        }
+
+        // Calculate stats (Filtered by Month, Year, and Kedeputian)
+        $stats = [
+            'total_peserta' => PesertaMagang::when($this->selectedKedeputian, function ($q) {
+                return $q->where('kedeputian_id', $this->selectedKedeputian);
+            })->count(),
+            'total_tk' => (clone $query)->where('kehadiran', 'TK')->count(),
+            'total_tm' => (clone $query)->where(function ($q) {
+                $q->where('kehadiran', 'like', 'TM%')
+                    ->orWhere('kehadiran', 'like', '%TM%');
+            })->count(),
+            'total_pc' => (clone $query)->where(function ($q) {
+                $q->where('kehadiran', 'like', 'PC%')
+                    ->orWhere('kehadiran', 'like', '%PC%');
+            })->count(),
+        ];
+
+        // Top 5 TK (Now automatically filtered)
+        $topTK = (clone $query)->where('kehadiran', 'TK')
+            ->select('peserta_magang_id', DB::raw('count(*) as count'))
+            ->groupBy('peserta_magang_id')
+            ->orderBy('count', 'desc')
+            ->with('pesertaMagang.kedeputian')
+            ->take(5)
+            ->get();
+
+        // Top 5 TM (Now automatically filtered)
+        $topTM = (clone $query)->where(function ($q) {
+            $q->where('kehadiran', 'like', 'TM%')
+                ->orWhere('kehadiran', 'like', '%TM%');
+        })
+            ->select('peserta_magang_id', DB::raw('count(*) as count'))
+            ->groupBy('peserta_magang_id')
+            ->orderBy('count', 'desc')
+            ->with('pesertaMagang.kedeputian')
+            ->take(5)
+            ->get();
+
+        // Calculate Max counts for bar charts visualization
+        $maxTK = $topTK->first()?->count ?? 1;
+        $maxTM = $topTM->first()?->count ?? 1;
+
+        // Recent Absensi (Real-time data)
+        $recentAbsensi = (clone $query)->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->with(['pesertaMagang.kedeputian'])
+            ->take(10)
+            ->get();
+
+        return view('livewire.attendance-dashboard', [
+            'stats' => $stats,
+            'topTK' => $topTK,
+            'topTM' => $topTM,
+            'maxTK' => $maxTK,
+            'maxTM' => $maxTM,
+            'recentAbsensi' => $recentAbsensi,
+            'months' => $this->getMonths(),
+            'years' => range(date('Y'), date('Y') - 5),
+            'kedeputians' => Kedeputian::orderBy('nama')->get(),
+        ]);
+    }
 }

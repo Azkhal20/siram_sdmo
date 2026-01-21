@@ -59,9 +59,8 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
-                // TiDB Cloud requires SSL, this ensures it's enabled if requested via env
-                (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_VERIFY_SERVER_CERT : \PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT) => env('DB_SSL_VERIFY', true),
+                (defined('PDO::MYSQL_ATTR_SSL_CA') ? \PDO::MYSQL_ATTR_SSL_CA : 1012) => env('MYSQL_ATTR_SSL_CA'),
+                (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') ? \PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT : 1014) => env('DB_SSL_VERIFY', true),
             ]) : [],
         ],
 

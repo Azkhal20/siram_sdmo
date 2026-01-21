@@ -127,30 +127,15 @@
                     </ul>
                 </li>
 
-                <!-- Laporan & Analisis -->
-<li x-data="{ open: {{ request()->routeIs('analisis.*') ? 'true' : 'false' }} }">
-    <button @click="open = !open" type="button" class="flex items-center w-full p-2 text-base transition duration-75 rounded-xl group {{ request()->routeIs('analisis.*') ? 'bg-blue-50/50 text-blue-600 dark:bg-blue-900/20' : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700' }}" :class="isCollapsed ? 'justify-center mx-1' : ''">
-        <svg class="flex-shrink-0 w-6 h-6 transition duration-75 {{ request()->routeIs('analisis.*') ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400 group-hover:text-blue-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-        </svg>
-        <span class="flex-1 ms-3 text-left whitespace-nowrap" x-show="!isCollapsed">Laporan & Analisis</span>
-        <svg x-show="!isCollapsed" class="w-3 h-3 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-    </button>
-    <ul x-show="open && !isCollapsed" x-transition class="py-2 space-y-1 ms-4 border-l border-gray-100 dark:border-gray-700">
-        <li>
-            <a href="{{ route('analisis.statistik') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg ps-4 group hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm {{ request()->routeIs('analisis.statistik') ? 'text-blue-600 font-bold' : 'text-gray-600 dark:text-gray-400' }}">
-                Statistik Kehadiran
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('log-aktivitas') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg ps-4 group hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm {{ request()->routeIs('log-aktivitas') ? 'text-blue-600 font-bold' : 'text-gray-600 dark:text-gray-400' }}">
-                Log Aktivitas
-            </a>
-        </li>
-    </ul>
-</li>
+                <!-- Log Aktivitas -->
+                <li>
+                    <a href="{{ route('log-aktivitas') }}" class="flex items-center p-2 rounded-xl group transition-all duration-200 {{ request()->routeIs('log-aktivitas') ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-500' : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700' }}" :class="isCollapsed ? 'justify-center mx-1' : ''">
+                        <svg class="w-6 h-6 transition duration-75 {{ request()->routeIs('log-aktivitas') ? 'text-blue-600 dark:text-blue-500' : 'text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="ms-3 whitespace-nowrap" x-show="!isCollapsed">Log Aktivitas</span>
+                    </a>
+                </li>
             </ul>
 
             <div x-show="!isCollapsed" class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800 transition-all duration-300">

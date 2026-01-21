@@ -1,7 +1,11 @@
 <div>
     <div class="mb-8 flex justify-between items-end">
         <div>
+<<<<<<< HEAD
             <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Daftar Peserta Magang</h2>
+=======
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Data Peserta Magang</h2>
+>>>>>>> fdd9ffff249840edd0ef7c7dfd926bf390a1b3e8
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Manajemen basis data peserta magang Biro SDMO.</p>
         </div>
         <button wire:click="create" class="inline-flex items-center px-5 py-2.5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-black rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
@@ -35,17 +39,15 @@
                     <tr>
                         <th class="px-6 py-4">NIP/No. Induk</th>
                         <th class="px-6 py-4">Nama Peserta</th>
-                        <th class="px-6 py-4">Universitas</th>
                         <th class="px-6 py-4">Kedeputian</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
-                    @foreach($pesertas as $p)
+                    @forelse($pesertas as $p)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all">
-                        <td class="px-6 py-4 font-black text-gray-900 dark:text-white uppercase tracking-tighter">{{ $p->no_induk }}</td>
+                        <td class="px-6 py-4 font-black text-gray-900 dark:text-white uppercase tracking-tighter">{{ $p->nomor_induk }}</td>
                         <td class="px-6 py-4 font-bold text-gray-600 dark:text-gray-300">{{ $p->nama }}</td>
-                        <td class="px-6 py-4 font-medium text-gray-500 dark:text-gray-400">{{ $p->univ ?? '-' }}</td>
                         <td class="px-6 py-4">
                             <span class="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">
                                 {{ $p->kedeputian->nama }}
@@ -66,12 +68,39 @@
                             </div>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-20 text-center text-gray-400 dark:text-gray-600 italic text-sm font-semibold">
+                            Tidak ada data peserta magang.
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="px-6 py-4">
-            {{ $pesertas->links() }}
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-800/50">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    Results: <span class="font-bold text-gray-900 dark:text-white">{{ $pesertas->firstItem() ?? 0 }} - {{ $pesertas->lastItem() ?? 0 }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ $pesertas->total() }}</span>
+                </span>
+                <div class="relative">
+                    <select wire:model.live="perPage" style="appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: none !important;" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block py-1.5 pl-3 pr-9 font-bold cursor-pointer transition-all shadow-sm hover:border-blue-400">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end flex-1 w-full md:w-auto">
+                {{ $pesertas->links('livewire.custom-pagination') }}
+            </div>
         </div>
     </div>
 
@@ -95,13 +124,8 @@
                 </div>
                 <div>
                     <label class="block mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Nomor Induk / NIP</label>
-                    <input wire:model="no_induk" type="text" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-black uppercase tracking-tighter" placeholder="Contoh: 19990101...">
-                    @error('no_induk') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
-                </div>
-                <div>
-                    <label class="block mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Universitas / Instansi</label>
-                    <input wire:model="univ" type="text" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-bold" placeholder="Asal universitas...">
-                    @error('univ') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
+                    <input wire:model="nomor_induk" type="text" class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-2xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-black uppercase tracking-tighter" placeholder="Contoh: 19990101...">
+                    @error('nomor_induk') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label class="block mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Penempatan Kedeputian</label>

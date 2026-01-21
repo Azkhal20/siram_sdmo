@@ -1,19 +1,27 @@
 <?php
 
-// 1. Paksa Laravel menggunakan folder /tmp karena Vercel bersifat read-only
-// Kita buat struktur folder yang dibutuhkan Laravel di dalam /tmp
-$tmpFolders = [
-    '/tmp/storage/framework/views',
-    '/tmp/storage/framework/sessions',
-    '/tmp/storage/framework/cache',
-    '/tmp/storage/logs',
+// 1. Definisikan folder penyimpanan sementara di /tmp (satu-satunya folder yang bisa ditulis di Vercel)
+$storagePath = '/tmp/storage';
+
+$dirs = [
+    $storagePath . '/framework/views',
+    $storagePath . '/framework/sessions',
+    $storagePath . '/framework/cache',
+    $storagePath . '/framework/cache/data',
+    $storagePath . '/bootstrap/cache',
+    $storagePath . '/logs',
 ];
 
-foreach ($tmpFolders as $folder) {
-    if (!is_dir($folder)) {
-        mkdir($folder, 0755, true);
+foreach ($dirs as $dir) {
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
     }
 }
 
-// 2. Hubungkan ke file startup standar Laravel
+// 2. Beritahu Laravel untuk menggunakan path baru ini sebelum bootstrap berjalan
+putenv("VIEW_COMPILED_PATH=" . $storagePath . "/framework/views");
+putenv("SESSION_DRIVER=cookie");
+putenv("LOG_CHANNEL=stderr");
+
+// 3. Masuk ke aplikasi Laravel
 require __DIR__ . '/../public/index.php';

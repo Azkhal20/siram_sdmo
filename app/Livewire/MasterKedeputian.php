@@ -14,7 +14,7 @@ class MasterKedeputian extends Component
 
     public $nama;
     public $kedeputianId;
-    public $perPage = 9;
+    public $perPage = 20;
     public $showModal = false;
 
     public function updatingPerPage()

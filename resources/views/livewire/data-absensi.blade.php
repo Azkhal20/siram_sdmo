@@ -132,65 +132,67 @@
                 </div>
 
                 <!-- Attendance Table -->
-                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                    <thead class="text-[10px] font-black uppercase bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
-                        <tr>
-                            <th class="px-6 py-4 tracking-wider">Tanggal</th>
-                            <th class="px-6 py-4 tracking-wider text-center">Kehadiran</th>
-                            <th class="px-6 py-4 text-center tracking-wider">Jam Masuk</th>
-                            <th class="px-6 py-4 text-center tracking-wider">Jam Pulang</th>
-                            <th class="px-6 py-4 text-center tracking-wider text-red-500">Telat Masuk</th>
-                            <th class="px-6 py-4 text-center tracking-wider text-orange-500">Pulang Cepat</th>
-                            <th class="px-6 py-4 tracking-wider">Keterangan</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
-                        @foreach($items as $row)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td class="px-6 py-3 w-[15%]">
-                                <div class="relative">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[800px] text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-[10px] font-black uppercase bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white">
+                            <tr>
+                                <th class="px-6 py-4 tracking-wider text-center">Tanggal</th>
+                                <th class="px-6 py-4 tracking-wider text-center">Kehadiran</th>
+                                <th class="px-6 py-4 text-center tracking-wider">Jam Masuk</th>
+                                <th class="px-6 py-4 text-center tracking-wider">Jam Pulang</th>
+                                <th class="px-6 py-4 text-center tracking-wider text-red-500">Telat Masuk</th>
+                                <th class="px-6 py-4 text-center tracking-wider text-orange-500">Pulang Cepat</th>
+                                <th class="px-6 py-4 tracking-wider">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                            @foreach($items as $row)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-6 py-3 w-[15%]">
+                                    <div class="relative">
+                                        <input type="text"
+                                            wire:model="previewData.{{ $row['_index'] }}.tanggal"
+                                            class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white font-mono text-xs font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full text-center p-2 transition-colors hover:border-blue-400">
+                                    </div>
+                                </td>
+                                <td class="px-6 py-2 text-center w-[10%]">
+                                    @php
+                                    $classes = match($row['kehadiran']) {
+                                    'TK' => 'bg-red-100 text-red-700 border-red-200',
+                                    'HN' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                    'TM', 'PC' => 'bg-amber-100 text-amber-700 border-amber-200',
+                                    'TMDHM' => 'bg-purple-100 text-purple-700 border-purple-200',
+                                    default => 'bg-gray-100 text-gray-700 border-gray-200'
+                                    };
+                                    @endphp
+                                    <span class="px-2.5 py-1 rounded-md text-[10px] font-black border {{ $classes }} uppercase tracking-wide text-center">
+                                        {{ $row['kehadiran'] }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-2 font-mono text-xs text-center">
+                                    <span class="{{ $row['jam_masuk'] ? 'text-gray-500 dark:text-gray-300 font-bold' : 'text-gray-300' }}">{{ $row['jam_masuk'] ?? '--:--' }}</span>
+                                </td>
+                                <td class="px-6 py-2 font-mono text-xs text-center">
+                                    <span class="{{ $row['jam_pulang'] ? 'text-gray-500 dark:text-gray-300 font-bold' : 'text-gray-300' }}">{{ $row['jam_pulang'] ?? '--:--' }}</span>
+                                </td>
+                                <td class="px-6 py-2 font-mono text-xs text-center text-red-500 font-bold">
+                                    {{ $row['telat_formatted'] }}
+                                </td>
+                                <td class="px-6 py-2 font-mono text-xs text-center text-orange-500 font-bold">
+                                    {{ $row['pulang_cepat_formatted'] }}
+                                </td>
+                                <td class="px-6 py-2 w-[25%]">
+                                    <!-- Editable Keterangan Input -->
                                     <input type="text"
-                                        wire:model="previewData.{{ $row['_index'] }}.tanggal"
-                                        class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white font-mono text-xs font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 p-2 transition-colors hover:border-blue-400">
-                                </div>
-                            </td>
-                            <td class="px-6 py-2 text-center w-[10%]">
-                                @php
-                                $classes = match($row['kehadiran']) {
-                                'TK' => 'bg-red-100 text-red-700 border-red-200',
-                                'HN' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                'TM', 'PC' => 'bg-amber-100 text-amber-700 border-amber-200',
-                                'TMDHM' => 'bg-purple-100 text-purple-700 border-purple-200',
-                                default => 'bg-gray-100 text-gray-700 border-gray-200'
-                                };
-                                @endphp
-                                <span class="px-2.5 py-1 rounded-md text-[10px] font-black border {{ $classes }} uppercase tracking-wide text-center">
-                                    {{ $row['kehadiran'] }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-2 font-mono text-xs text-center">
-                                <span class="{{ $row['jam_masuk'] ? 'text-gray-500 dark:text-gray-300 font-bold' : 'text-gray-300' }}">{{ $row['jam_masuk'] ?? '--:--' }}</span>
-                            </td>
-                            <td class="px-6 py-2 font-mono text-xs text-center">
-                                <span class="{{ $row['jam_pulang'] ? 'text-gray-500 dark:text-gray-300 font-bold' : 'text-gray-300' }}">{{ $row['jam_pulang'] ?? '--:--' }}</span>
-                            </td>
-                            <td class="px-6 py-2 font-mono text-xs text-center text-red-500 font-bold">
-                                {{ $row['telat_formatted'] }}
-                            </td>
-                            <td class="px-6 py-2 font-mono text-xs text-center text-orange-500 font-bold">
-                                {{ $row['pulang_cepat_formatted'] }}
-                            </td>
-                            <td class="px-6 py-2 w-[25%]">
-                                <!-- Editable Keterangan Input -->
-                                <input type="text"
-                                    wire:model="previewData.{{ $row['_index'] }}.keterangan"
-                                    placeholder="Tambah keterangan..."
-                                    class="bg-transparent border-b border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-xs font-bold focus:ring-0 focus:border-blue-500 block w-full p-2 placeholder-gray-300 transition-all">
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                        wire:model="previewData.{{ $row['_index'] }}.keterangan"
+                                        placeholder="Tambah keterangan..."
+                                        class="bg-transparent border-b border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-xs font-bold focus:ring-0 focus:border-blue-500 block w-full p-2 placeholder-gray-300 transition-all">
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
             @endforeach
         </div>

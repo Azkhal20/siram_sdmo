@@ -4,8 +4,10 @@ namespace App\Livewire;
 
 use App\Models\Absensi;
 use App\Models\Kedeputian;
+use App\Exports\AbsensiExport;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RekapAbsensi extends Component
 {
@@ -19,6 +21,13 @@ class RekapAbsensi extends Component
     public $sortDirection = 'desc';
     public $perPage = 10;
 
+    private $kodeKehadiranList = [
+        'TMDHM', 'TMDHP',
+        'TM1', 'TM2', 'TM3', 'TM',
+        'PC1', 'PC2', 'PC3', 'PC',
+        'HN', 'TK', 'DL', 'LJ', 'LN', 'S', 'I', 'C', 'K'
+    ];
+
     protected $queryString = [
         'search' => ['except' => ''],
         'filterKedeputian' => ['except' => ''],
@@ -30,18 +39,22 @@ class RekapAbsensi extends Component
     {
         $this->resetPage();
     }
+
     public function updatingFilterKedeputian()
     {
         $this->resetPage();
     }
+
     public function updatingFromDate()
     {
         $this->resetPage();
     }
+
     public function updatingToDate()
     {
         $this->resetPage();
     }
+
     public function updatingPerPage()
     {
         $this->resetPage();
@@ -70,51 +83,137 @@ class RekapAbsensi extends Component
         };
     }
 
+    private function getKeteranganKode(string $kode): string
+    {
+        return match (strtoupper(trim($kode))) {
+            'TK' => 'Tanpa Keterangan',
+            'TMDHM' => 'Tidak Absen Masuk',
+            'TMDHP' => 'Tidak Absen Pulang',
+            'TM' => 'Terlambat Masuk',
+            'TM1' => 'Terlambat < 30 menit',
+            'TM2' => 'Terlambat > 30 menit',
+            'TM3' => 'Terlambat > 1 jam',
+            'PC' => 'Pulang Cepat',
+            'PC1' => 'Pulang Cepat < 30 menit',
+            'PC2' => 'Pulang Cepat > 30 menit',
+            'PC3' => 'Pulang Cepat > 1 jam',
+            'HN' => 'Hadir Normal',
+            'DL' => 'Dinas Luar',
+            'LJ' => 'Libur Sabtu/Minggu',
+            'LN' => 'Libur Nasional',
+            'S' => 'Sakit',
+            'I' => 'Izin',
+            'C' => 'Cuti',
+            'K' => 'Tanpa Keterangan',
+            default => $kode,
+        };
+    }
+
+    private function parseKodeGabungan(string $kodeGabungan): array
+    {
+        $kodeGabungan = strtoupper(trim($kodeGabungan));
+
+        if (str_contains($kodeGabungan, '-')) {
+            return array_map('trim', explode('-', $kodeGabungan));
+        }
+
+        $hasil = [];
+        $sisaKode = $kodeGabungan;
+
+        while (!empty($sisaKode)) {
+            $found = false;
+            foreach ($this->kodeKehadiranList as $kode) {
+                if (str_starts_with($sisaKode, $kode)) {
+                    $hasil[] = $kode;
+                    $sisaKode = substr($sisaKode, strlen($kode));
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                if (!empty($sisaKode)) {
+                    $hasil[] = $sisaKode;
+                }
+                break;
+            }
+        }
+
+        return !empty($hasil) ? $hasil : [$kodeGabungan];
+    }
+
+    private function getKeterangan(string $kodeKehadiran): string
+    {
+        $kodeParts = $this->parseKodeGabungan($kodeKehadiran);
+
+        if (count($kodeParts) === 1) {
+            $ket = $this->getKeteranganKode($kodeParts[0]);
+            return !empty($ket) ? $ket . '.' : '-';
+        }
+
+        $keteranganParts = [];
+        foreach ($kodeParts as $kode) {
+            $ket = $this->getKeteranganKode($kode);
+            if (!empty($ket) && $ket !== $kode) {
+                $keteranganParts[] = $ket;
+            }
+        }
+
+        return !empty($keteranganParts) ? implode(' & ', $keteranganParts) . '.' : '-';
+    }
+
+    /**
+     * Mendapatkan nama kedeputian berdasarkan ID
+     */
+    private function getNamaKedeputian(): string
+    {
+        if (empty($this->filterKedeputian)) {
+            return 'Semua_Kedeputian';
+        }
+
+        $kedeputian = Kedeputian::find($this->filterKedeputian);
+        if ($kedeputian) {
+            return str_replace(' ', '_', preg_replace('/[^A-Za-z0-9\s]/', '', $kedeputian->nama));
+        }
+
+        return 'Kedeputian_' . $this->filterKedeputian;
+    }
+
+    /**
+     * Mendapatkan rentang tanggal untuk nama file
+     */
+    private function getRentangTanggal(): string
+    {
+        if ($this->fromDate && $this->toDate) {
+            return date('d-m-Y', strtotime($this->fromDate)) . '_sd_' . date('d-m-Y', strtotime($this->toDate));
+        } elseif ($this->fromDate) {
+            return 'dari_' . date('d-m-Y', strtotime($this->fromDate));
+        } elseif ($this->toDate) {
+            return 'sampai_' . date('d-m-Y', strtotime($this->toDate));
+        }
+
+        return 'Semua_Tanggal';
+    }
+
+    /**
+     * Export ke format XLSX menggunakan Laravel Excel
+     */
     public function exportExcel()
     {
-        $fileName = 'Rekap_Absensi_' . $this->filterKedeputian . '_' . date('Y-m-d_H-i-s') . '.csv';
+        $namaKedeputian = $this->getNamaKedeputian();
+        $rentangTanggal = $this->getRentangTanggal();
+        $timestamp = date('Y-m-d_H-i-s');
 
-        return response()->streamDownload(function () {
-            $handle = fopen('php://output', 'w');
+        $fileName = "Rekap_Absensi_{$namaKedeputian}_{$rentangTanggal}_{$timestamp}.xlsx";
 
-            // Header CSV (Updated 'Status' to 'Kehadiran')
-            fputcsv($handle, ['NIP', 'Nama Peserta', 'Kedeputian', 'Unit Kerja', 'Tanggal', 'Kehadiran', 'Jam Masuk', 'Jam Pulang', 'Telat Masuk']);
-
-            $query = Absensi::with('pesertaMagang.kedeputian')
-                ->whereHas('pesertaMagang', function ($query) {
-                    $query->where('nama', 'like', '%' . $this->search . '%');
-                })
-                ->when($this->filterKedeputian, function ($query) {
-                    $query->whereHas('pesertaMagang', function ($q) {
-                        $q->where('kedeputian_id', $this->filterKedeputian);
-                    });
-                })
-                ->when($this->fromDate, function ($query) {
-                    $query->whereDate('tanggal', '>=', $this->fromDate);
-                })
-                ->when($this->toDate, function ($query) {
-                    $query->whereDate('tanggal', '<=', $this->toDate);
-                })
-                ->orderBy('tanggal', 'desc');
-
-            $query->chunk(500, function ($absensis) use ($handle) {
-                foreach ($absensis as $absen) {
-                    fputcsv($handle, [
-                        $absen->pesertaMagang->nomor_induk . ' ',
-                        $absen->pesertaMagang->nama,
-                        $absen->pesertaMagang->kedeputian->nama ?? '-',
-                        $absen->pesertaMagang->unit_kerja_text ?? '-',
-                        $absen->tanggal->format('d/m/Y'),
-                        $absen->kehadiran,
-                        $absen->jam_masuk,
-                        $absen->jam_pulang,
-                        $absen->menit_telat
-                    ]);
-                }
-            });
-
-            fclose($handle);
-        }, $fileName);
+        return Excel::download(
+            new AbsensiExport(
+                $this->search,
+                $this->filterKedeputian,
+                $this->fromDate,
+                $this->toDate
+            ),
+            $fileName
+        );
     }
 
     public function render()

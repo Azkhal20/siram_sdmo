@@ -78,7 +78,7 @@ class RekapAbsensi extends Component
             $handle = fopen('php://output', 'w');
 
             // Header CSV (Updated 'Status' to 'Kehadiran')
-            fputcsv($handle, ['NIP', 'Nama Peserta', 'Kedeputian', 'Unit Kerja Asal', 'Tanggal', 'Kehadiran', 'Jam Masuk', 'Jam Pulang', 'Telat (Menit)']);
+            fputcsv($handle, ['NIP', 'Nama Peserta', 'Kedeputian', 'Unit Kerja', 'Tanggal', 'Kehadiran', 'Jam Masuk', 'Jam Pulang', 'Telat Masuk']);
 
             $query = Absensi::with('pesertaMagang.kedeputian')
                 ->whereHas('pesertaMagang', function ($query) {

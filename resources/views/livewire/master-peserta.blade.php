@@ -1,7 +1,7 @@
 <div>
     <div class="mb-8 flex justify-between items-end">
         <div>
-            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Master Peserta Magang</h2>
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Data Peserta Magang</h2>
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Manajemen basis data peserta magang Biro SDMO.</p>
         </div>
         <button wire:click="create" class="inline-flex items-center px-5 py-2.5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-black rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95">

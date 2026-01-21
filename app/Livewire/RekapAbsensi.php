@@ -19,6 +19,14 @@ class RekapAbsensi extends Component
     public $sortDirection = 'desc';
     public $perPage = 10;
 
+    // Daftar kode kehadiran untuk parsing gabungan
+    private $kodeKehadiranList = [
+        'TMDHM', 'TMDHP',
+        'TM1', 'TM2', 'TM3', 'TM',
+        'PC1', 'PC2', 'PC3', 'PC',
+        'HN', 'TK', 'DL', 'LJ', 'LN', 'S', 'I', 'C', 'K'
+    ];
+
     protected $queryString = [
         'search' => ['except' => ''],
         'filterKedeputian' => ['except' => ''],
@@ -70,15 +78,117 @@ class RekapAbsensi extends Component
         };
     }
 
+    /**
+     * Konversi kode kehadiran tunggal ke keterangan
+     */
+    private function getKeteranganKode(string $kode): string
+    {
+        return match (strtoupper(trim($kode))) {
+            'TK' => 'Tanpa Keterangan',
+            'TMDHM' => 'Tidak Absen Masuk',
+            'TMDHP' => 'Tidak Absen Pulang',
+            'TM' => 'Terlambat Masuk',
+            'TM1' => 'Terlambat < 30 menit',
+            'TM2' => 'Terlambat > 30 menit',
+            'TM3' => 'Terlambat > 1 jam',
+            'PC' => 'Pulang Cepat',
+            'PC1' => 'Pulang Cepat < 30 menit',
+            'PC2' => 'Pulang Cepat > 30 menit',
+            'PC3' => 'Pulang Cepat > 1 jam',
+            'HN' => 'Hadir Normal',
+            'DL' => 'Dinas Luar',
+            'LJ' => 'Libur Sabtu/Minggu',
+            'LN' => 'Libur Nasional',
+            'S' => 'Sakit',
+            'I' => 'Izin',
+            'C' => 'Cuti',
+            'K' => 'Tanpa Keterangan',
+            default => $kode,
+        };
+    }
+
+    /**
+     * Parse kode gabungan menjadi array kode tunggal
+     */
+    private function parseKodeGabungan(string $kodeGabungan): array
+    {
+        $kodeGabungan = strtoupper(trim($kodeGabungan));
+
+        if (str_contains($kodeGabungan, '-')) {
+            return array_map('trim', explode('-', $kodeGabungan));
+        }
+
+        $hasil = [];
+        $sisaKode = $kodeGabungan;
+
+        while (!empty($sisaKode)) {
+            $found = false;
+            foreach ($this->kodeKehadiranList as $kode) {
+                if (str_starts_with($sisaKode, $kode)) {
+                    $hasil[] = $kode;
+                    $sisaKode = substr($sisaKode, strlen($kode));
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                if (!empty($sisaKode)) {
+                    $hasil[] = $sisaKode;
+                }
+                break;
+            }
+        }
+
+        return !empty($hasil) ? $hasil : [$kodeGabungan];
+    }
+
+    /**
+     * Konversi kode kehadiran (tunggal/gabungan) ke keterangan lengkap
+     */
+    private function getKeterangan(string $kodeKehadiran): string
+    {
+        $kodeParts = $this->parseKodeGabungan($kodeKehadiran);
+
+        if (count($kodeParts) === 1) {
+            $ket = $this->getKeteranganKode($kodeParts[0]);
+            return !empty($ket) ? $ket . '.' : '-';
+        }
+
+        $keteranganParts = [];
+        foreach ($kodeParts as $kode) {
+            $ket = $this->getKeteranganKode($kode);
+            if (!empty($ket) && $ket !== $kode) {
+                $keteranganParts[] = $ket;
+            }
+        }
+
+        return !empty($keteranganParts) ? implode(' & ', $keteranganParts) . '.' : '-';
+    }
+
     public function exportExcel()
     {
-        $fileName = 'Rekap_Absensi_' . $this->filterKedeputian . '_' . date('Y-m-d_H-i-s') . '.csv';
+        $fileName = 'Rekap_Absensi_' . ($this->filterKedeputian ?: 'Semua') . '_' . date('Y-m-d_H-i-s') . '.csv';
 
         return response()->streamDownload(function () {
             $handle = fopen('php://output', 'w');
 
-            // Header CSV (Updated 'Status' to 'Kehadiran')
-            fputcsv($handle, ['NIP', 'Nama Peserta', 'Kedeputian', 'Unit Kerja Asal', 'Tanggal', 'Kehadiran', 'Jam Masuk', 'Jam Pulang', 'Telat (Menit)']);
+            // Header CSV
+            fputcsv($handle, [
+                'NO',
+                'NIP',
+                'NAMA PESERTA',
+                'KEDEPUTIAN',
+                'UNIT KERJA ASAL',
+                'TANGGAL',
+                'KEHADIRAN',
+                'JAM MASUK',
+                'JAM PULANG',
+                'TELAT MASUK',
+                'PULANG CEPAT',
+                'KETERANGAN'
+            ]);
+
+            $no = 0;
 
             $query = Absensi::with('pesertaMagang.kedeputian')
                 ->whereHas('pesertaMagang', function ($query) {
@@ -95,20 +205,40 @@ class RekapAbsensi extends Component
                 ->when($this->toDate, function ($query) {
                     $query->whereDate('tanggal', '<=', $this->toDate);
                 })
-                ->orderBy('tanggal', 'desc');
+                ->orderBy('tanggal', 'asc');
 
-            $query->chunk(500, function ($absensis) use ($handle) {
+            $query->chunk(500, function ($absensis) use ($handle, &$no) {
                 foreach ($absensis as $absen) {
+                    $no++;
+
+                    // Format jam masuk dan pulang
+                    $jamMasuk = $absen->jam_masuk ? date('H:i', strtotime($absen->jam_masuk)) : '-';
+                    $jamPulang = $absen->jam_pulang ? date('H:i', strtotime($absen->jam_pulang)) : '-';
+
+                    // Format telat masuk
+                    $menitTelat = $absen->menit_telat ?? 0;
+                    $telatStr = $menitTelat > 0 ? sprintf('%02d:%02d', floor($menitTelat / 60), $menitTelat % 60) : '-';
+
+                    // Format pulang cepat
+                    $menitPulangCepat = $absen->menit_pulang_cepat ?? 0;
+                    $pulangCepatStr = $menitPulangCepat > 0 ? sprintf('%02d:%02d', floor($menitPulangCepat / 60), $menitPulangCepat % 60) : '-';
+
+                    // Generate keterangan dari kode kehadiran
+                    $keterangan = $this->getKeterangan($absen->kehadiran ?? 'HN');
+
                     fputcsv($handle, [
-                        $absen->pesertaMagang->nomor_induk . ' ',
-                        $absen->pesertaMagang->nama,
+                        $no,
+                        "'" . ($absen->pesertaMagang->nomor_induk ?? '-'),
+                        $absen->pesertaMagang->nama ?? '-',
                         $absen->pesertaMagang->kedeputian->nama ?? '-',
                         $absen->pesertaMagang->unit_kerja_text ?? '-',
-                        $absen->tanggal->format('d/m/Y'),
-                        $absen->kehadiran,
-                        $absen->jam_masuk,
-                        $absen->jam_pulang,
-                        $absen->menit_telat
+                        $absen->tanggal->format('d-m-Y'),
+                        $absen->kehadiran ?? '-',
+                        $jamMasuk,
+                        $jamPulang,
+                        $telatStr,
+                        $pulangCepatStr,
+                        $keterangan
                     ]);
                 }
             });

@@ -1,33 +1,32 @@
 <?php
 
-// 1. Setup folder penyimpanan di /tmp
+// 1. Setup Folder Storage di /tmp (Wajib untuk Vercel)
 $storagePath = '/tmp/storage';
-$dirs = [
-    $storagePath . '/framework/views',
-    $storagePath . '/framework/sessions',
-    $storagePath . '/framework/cache',
-    $storagePath . '/framework/cache/data',
-    $storagePath . '/bootstrap/cache',
-    $storagePath . '/logs',
+$subDirs = [
+    '/framework/views',
+    '/framework/sessions',
+    '/framework/cache',
+    '/framework/cache/data',
+    '/logs'
 ];
 
-foreach ($dirs as $dir) {
-    if (!is_dir($dir)) {
-        mkdir($dir, 0755, true);
+foreach ($subDirs as $dir) {
+    if (!is_dir($storagePath . $dir)) {
+        mkdir($storagePath . $dir, 0755, true);
     }
 }
 
-// 2. Jalankan Migrasi Otomatis (Hanya jika belum ada file 'migrated' di /tmp)
-// Ini adalah cara aman agar migrasi tidak memperlambat setiap request
+// 2. Jalankan Migrasi Database secara otomatis
+// Kita gunakan file penanda agar migrasi tidak berjalan terus-menerus
 if (!file_exists('/tmp/migrated')) {
     try {
-        putenv('ARTISAN_MIGRATE=true');
-        shell_exec('php ' . __DIR__ . '/../artisan migrate --force');
+        // Memanggil artisan migrate dari dalam PHP
+        exec('php ' . __DIR__ . '/../artisan migrate --force');
         file_put_contents('/tmp/migrated', time());
     } catch (\Exception $e) {
-        // Abaikan jika gagal, aplikasi akan melempar error DB nanti
+        // Jika gagal, biarkan Laravel yang menangani error DB nantinya
     }
 }
 
-// 3. Masuk ke aplikasi Laravel
+// 3. Panggil Laravel
 require __DIR__ . '/../public/index.php';

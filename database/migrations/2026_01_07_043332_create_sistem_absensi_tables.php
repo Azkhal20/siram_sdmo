@@ -53,6 +53,7 @@ return new class extends Migration
             $table->string('jam_masuk')->nullable();
             $table->string('jam_pulang')->nullable();
             $table->integer('menit_telat')->default(0);
+            $table->integer('menit_pulang_cepat')->default(0); 
             $table->string('keterangan')->nullable(); // Kolom baru untuk catatan tambahan
 
             $table->timestamps();

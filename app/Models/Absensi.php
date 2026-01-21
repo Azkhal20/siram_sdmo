@@ -14,12 +14,14 @@ class Absensi extends Model
         'jam_masuk',
         'jam_pulang',
         'menit_telat',
-        'keterangan', // Added to fillable
+        'menit_pulang_cepat',
+        'keterangan', 
     ];
 
     protected $casts = [
         'tanggal' => 'date',
         'menit_telat' => 'integer',
+        'menit_pulang_cepat' => 'integer',
         'jam_masuk' => 'datetime:H:i:s',
         'jam_pulang' => 'datetime:H:i:s',
     ];

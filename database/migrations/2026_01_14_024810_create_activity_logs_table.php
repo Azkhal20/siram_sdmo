@@ -10,7 +10,7 @@ class CreateActivityLogsTable extends Migration
     {
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+$table->unsignedBigInteger('user_id')->nullable();
             $table->string('action');
             $table->string('model_type')->nullable();
             $table->unsignedBigInteger('model_id')->nullable();

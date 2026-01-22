@@ -17,12 +17,20 @@ class AttendanceDashboard extends Component
     public function mount()
     {
         // Try to find the latest attendance data to set as default view
-        $latest = Absensi::orderBy('tanggal', 'desc')->first();
+        try {
+            $latest = Absensi::whereNotNull('tanggal')->orderBy('tanggal', 'desc')->first();
 
-        if ($latest) {
-            $this->selectedMonth = $latest->tanggal->format('m');
-            $this->selectedYear = $latest->tanggal->format('Y');
-        } else {
+            if ($latest && $latest->tanggal) {
+                // Ensure tanggal is treated as a Carbon instance
+                $date = \Carbon\Carbon::parse($latest->tanggal);
+                $this->selectedMonth = $date->format('m');
+                $this->selectedYear = $date->format('Y');
+            } else {
+                $this->selectedMonth = date('m');
+                $this->selectedYear = date('Y');
+            }
+        } catch (\Exception $e) {
+            // Fallback if there is a database issue
             $this->selectedMonth = date('m');
             $this->selectedYear = date('Y');
         }
@@ -58,74 +66,92 @@ class AttendanceDashboard extends Component
 
     public function render()
     {
-        $query = Absensi::whereMonth('tanggal', $this->selectedMonth)
-            ->whereYear('tanggal', $this->selectedYear);
+        try {
+            $query = Absensi::whereMonth('tanggal', $this->selectedMonth)
+                ->whereYear('tanggal', $this->selectedYear);
 
-        // Apply Kedeputian filter to the base query globally
-        if ($this->selectedKedeputian) {
-            $query->whereHas('pesertaMagang', function ($q) {
-                $q->where('kedeputian_id', $this->selectedKedeputian);
-            });
-        }
+            // Apply Kedeputian filter to the base query globally
+            if ($this->selectedKedeputian) {
+                $query->whereHas('pesertaMagang', function ($q) {
+                    $q->where('kedeputian_id', $this->selectedKedeputian);
+                });
+            }
 
-        // Calculate stats (Filtered by Month, Year, and Kedeputian)
-        $stats = [
-            'total_peserta' => PesertaMagang::when($this->selectedKedeputian, function ($q) {
-                return $q->where('kedeputian_id', $this->selectedKedeputian);
-            })->count(),
-            'total_tk' => (clone $query)->where('kehadiran', 'TK')->count(),
-            'total_tm' => (clone $query)->where(function ($q) {
+            // Calculate stats (Filtered by Month, Year, and Kedeputian)
+            $stats = [
+                'total_peserta' => PesertaMagang::when($this->selectedKedeputian, function ($q) {
+                    return $q->where('kedeputian_id', $this->selectedKedeputian);
+                })->count(),
+                'total_tk' => (clone $query)->where('kehadiran', 'TK')->count(),
+                'total_tm' => (clone $query)->where(function ($q) {
+                    $q->where('kehadiran', 'like', 'TM%')
+                        ->orWhere('kehadiran', 'like', '%TM%');
+                })->count(),
+                'total_pc' => (clone $query)->where(function ($q) {
+                    $q->where('kehadiran', 'like', 'PC%')
+                        ->orWhere('kehadiran', 'like', '%PC%');
+                })->count(),
+            ];
+
+            // Top 5 TK (Now automatically filtered)
+            $topTK = (clone $query)->where('kehadiran', 'TK')
+                ->select('peserta_magang_id', DB::raw('count(*) as count'))
+                ->groupBy('peserta_magang_id')
+                ->orderBy('count', 'desc')
+                ->with('pesertaMagang.kedeputian')
+                ->take(5)
+                ->get();
+
+            // Top 5 TM (Now automatically filtered)
+            $topTM = (clone $query)->where(function ($q) {
                 $q->where('kehadiran', 'like', 'TM%')
                     ->orWhere('kehadiran', 'like', '%TM%');
-            })->count(),
-            'total_pc' => (clone $query)->where(function ($q) {
-                $q->where('kehadiran', 'like', 'PC%')
-                    ->orWhere('kehadiran', 'like', '%PC%');
-            })->count(),
-        ];
+            })
+                ->select('peserta_magang_id', DB::raw('count(*) as count'))
+                ->groupBy('peserta_magang_id')
+                ->orderBy('count', 'desc')
+                ->with('pesertaMagang.kedeputian')
+                ->take(5)
+                ->get();
 
-        // Top 5 TK (Now automatically filtered)
-        $topTK = (clone $query)->where('kehadiran', 'TK')
-            ->select('peserta_magang_id', DB::raw('count(*) as count'))
-            ->groupBy('peserta_magang_id')
-            ->orderBy('count', 'desc')
-            ->with('pesertaMagang.kedeputian')
-            ->take(5)
-            ->get();
+            // Calculate Max counts for bar charts visualization
+            $maxTK = $topTK->first()?->count ?? 1;
+            $maxTM = $topTM->first()?->count ?? 1;
 
-        // Top 5 TM (Now automatically filtered)
-        $topTM = (clone $query)->where(function ($q) {
-            $q->where('kehadiran', 'like', 'TM%')
-                ->orWhere('kehadiran', 'like', '%TM%');
-        })
-            ->select('peserta_magang_id', DB::raw('count(*) as count'))
-            ->groupBy('peserta_magang_id')
-            ->orderBy('count', 'desc')
-            ->with('pesertaMagang.kedeputian')
-            ->take(5)
-            ->get();
+            // Recent Absensi (Real-time data)
+            $recentAbsensi = (clone $query)->orderBy('tanggal', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->with(['pesertaMagang.kedeputian'])
+                ->take(10)
+                ->get();
 
-        // Calculate Max counts for bar charts visualization
-        $maxTK = $topTK->first()?->count ?? 1;
-        $maxTM = $topTM->first()?->count ?? 1;
+            return view('livewire.attendance-dashboard', [
+                'stats' => $stats,
+                'topTK' => $topTK,
+                'topTM' => $topTM,
+                'maxTK' => $maxTK,
+                'maxTM' => $maxTM,
+                'recentAbsensi' => $recentAbsensi,
+                'months' => $this->getMonths(),
+                'years' => range(date('Y'), date('Y') - 5),
+                'kedeputians' => Kedeputian::orderBy('nama')->get(),
+            ]);
+        } catch (\Exception $e) {
+            // Handle cases where database might not be ready or migrations haven't run
+            \Illuminate\Support\Facades\Log::error('Dashboard Render Error: ' . $e->getMessage());
 
-        // Recent Absensi (Real-time data)
-        $recentAbsensi = (clone $query)->orderBy('tanggal', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->with(['pesertaMagang.kedeputian'])
-            ->take(10)
-            ->get();
-
-        return view('livewire.attendance-dashboard', [
-            'stats' => $stats,
-            'topTK' => $topTK,
-            'topTM' => $topTM,
-            'maxTK' => $maxTK,
-            'maxTM' => $maxTM,
-            'recentAbsensi' => $recentAbsensi,
-            'months' => $this->getMonths(),
-            'years' => range(date('Y'), date('Y') - 5),
-            'kedeputians' => Kedeputian::orderBy('nama')->get(),
-        ]);
+            return view('livewire.attendance-dashboard', [
+                'stats' => ['total_peserta' => 0, 'total_tk' => 0, 'total_tm' => 0, 'total_pc' => 0],
+                'topTK' => collect(),
+                'topTM' => collect(),
+                'maxTK' => 1,
+                'maxTM' => 1,
+                'recentAbsensi' => collect(),
+                'months' => $this->getMonths(),
+                'years' => range(date('Y'), date('Y') - 5),
+                'kedeputians' => collect(),
+                'db_error' => true // Flag to show warning in view if you have a place for it
+            ]);
+        }
     }
 }

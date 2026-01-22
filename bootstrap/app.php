@@ -17,4 +17,4 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->create()
-    ->useStoragePath(isset($_SERVER['VERCEL_URL']) ? '/tmp/storage' : storage_path());
+    ->useStoragePath(env('VERCEL') ? '/tmp/storage' : storage_path());

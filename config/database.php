@@ -46,11 +46,12 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            // Laravel akan mengecek DB_HOST, jika tidak ada (di Vercel), dia akan pakai TIDB_HOST
+            'host' => env('DB_HOST', env('TIDB_HOST', '127.0.0.1')),
+            'port' => env('DB_PORT', env('TIDB_PORT', '3306')),
+            'database' => env('DB_DATABASE', env('TIDB_DATABASE', 'laravel')),
+            'username' => env('DB_USERNAME', env('TIDB_USER', 'root')),
+            'password' => env('DB_PASSWORD', env('TIDB_PASSWORD', '')),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
@@ -59,9 +60,10 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                1012 => env('MYSQL_ATTR_SSL_CA'), // PDO::MYSQL_ATTR_SSL_CA
-                1014 => env('DB_SSL_VERIFY', true), // PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
-            ]) : [],
+                // SSL CA untuk TiDB Cloud di Vercel
+                1012 => env('MYSQL_ATTR_SSL_CA', isset($_SERVER['VERCEL_URL']) ? '/etc/pki/tls/certs/ca-bundle.crt' : null),
+                1014 => env('DB_SSL_VERIFY', true),
+]) : [],
         ],
 
         'mariadb' => [

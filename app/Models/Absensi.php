@@ -15,15 +15,15 @@ class Absensi extends Model
         'jam_pulang',
         'menit_telat',
         'menit_pulang_cepat',
-        'keterangan', 
+        'keterangan',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
         'menit_telat' => 'integer',
         'menit_pulang_cepat' => 'integer',
-        'jam_masuk' => 'datetime:H:i:s',
-        'jam_pulang' => 'datetime:H:i:s',
+        // jam_masuk and jam_pulang are stored as 'H:i' strings in the database, 
+        // so we don't need to cast them to datetime which expects a full date-time string.
     ];
 
     public function pesertaMagang(): BelongsTo

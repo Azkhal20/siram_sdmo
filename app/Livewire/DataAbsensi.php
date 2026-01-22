@@ -30,10 +30,25 @@ class DataAbsensi extends Component
 
     // Daftar kode kehadiran (urutan penting: yang lebih panjang dulu)
     private $kodeKehadiran = [
-        'TMDHM', 'TMDHP',
-        'TM1', 'TM2', 'TM3', 'TM',
-        'PC1', 'PC2', 'PC3', 'PC',
-        'HN', 'TK', 'DL', 'LJ', 'LN', 'S', 'I', 'C', 'K'
+        'TMDHM',
+        'TMDHP',
+        'TM1',
+        'TM2',
+        'TM3',
+        'TM',
+        'PC1',
+        'PC2',
+        'PC3',
+        'PC',
+        'HN',
+        'TK',
+        'DL',
+        'LJ',
+        'LN',
+        'S',
+        'I',
+        'C',
+        'K'
     ];
 
     public function mount()
@@ -104,19 +119,19 @@ class DataAbsensi extends Component
     private function parseKodeGabungan(string $kodeGabungan): array
     {
         $kodeGabungan = strtoupper(trim($kodeGabungan));
-        
+
         // Jika ada tanda '-', split berdasarkan '-'
         if (str_contains($kodeGabungan, '-')) {
             return array_map('trim', explode('-', $kodeGabungan));
         }
-        
+
         // Jika tidak ada '-', coba parse kode yang digabung tanpa separator
         $hasil = [];
         $sisaKode = $kodeGabungan;
-        
+
         while (!empty($sisaKode)) {
             $found = false;
-            
+
             // Cari kode yang cocok (mulai dari yang terpanjang)
             foreach ($this->kodeKehadiran as $kode) {
                 if (str_starts_with($sisaKode, $kode)) {
@@ -126,7 +141,7 @@ class DataAbsensi extends Component
                     break;
                 }
             }
-            
+
             // Jika tidak ada yang cocok, keluar dari loop
             if (!$found) {
                 // Jika masih ada sisa, tambahkan sebagai kode tunggal
@@ -136,19 +151,19 @@ class DataAbsensi extends Component
                 break;
             }
         }
-        
+
         return !empty($hasil) ? $hasil : [$kodeGabungan];
     }
 
     private function getKeterangan(string $kodeGabungan): string
     {
         $kodeParts = $this->parseKodeGabungan($kodeGabungan);
-        
+
         if (count($kodeParts) === 1) {
             $ket = $this->getKeteranganKode($kodeParts[0]);
             return !empty($ket) ? $ket . '.' : '';
         }
-        
+
         $keteranganParts = [];
         foreach ($kodeParts as $kode) {
             $ket = $this->getKeteranganKode($kode);
@@ -156,7 +171,7 @@ class DataAbsensi extends Component
                 $keteranganParts[] = $ket;
             }
         }
-        
+
         return !empty($keteranganParts) ? implode(' & ', $keteranganParts) . '.' : '';
     }
 
@@ -173,21 +188,21 @@ class DataAbsensi extends Component
 
         foreach ($kodeParts as $part) {
             $part = strtoupper(trim($part));
-            
+
             if ($part === 'TMDHM') {
                 $result['ada_jam_masuk'] = false;
             }
-            
+
             if ($part === 'TMDHP') {
                 $result['ada_jam_pulang'] = false;
             }
-            
+
             if (in_array($part, ['LJ', 'LN'])) {
                 $result['is_libur'] = true;
                 $result['ada_jam_masuk'] = false;
                 $result['ada_jam_pulang'] = false;
             }
-            
+
             if ($part === 'TK') {
                 $result['is_tidak_hadir'] = true;
                 $result['ada_jam_masuk'] = false;
@@ -247,7 +262,7 @@ class DataAbsensi extends Component
 
         return ['menit' => 0, 'str' => ''];
     }
-        public function parsePdf()
+    public function parsePdf()
     {
         $this->isProcessing = true;
         $this->showPreview = false;
@@ -357,34 +372,21 @@ class DataAbsensi extends Component
                             preg_match_all('/(\d{2}:\d{2})/', $line, $timeMatches);
                             $rawTimes = $timeMatches[1] ?? [];
 
-                            // Point 1: Determine clock-time expectations based on the detected Kehadiran code
-                            // Group 1: No clock times expected
+                            // Determine clock-time expectations based on the detected Kehadiran code
                             if (in_array($kehadiran, ['TK', 'LN', 'LJ', 'S', 'I', 'DL', 'C'])) {
                                 $jamMasuk = null;
                                 $jamPulang = null;
-                            }
-                            // Group 2: Only Pulang expected (e.g., missed morning scan)
-                            elseif (str_contains($kehadiran, 'TMDHM') || str_contains($kehadiran, 'PC1-TMDHM')) {
-                                // The FIRST HH:mm appearing on a TMDHM line is the Jam Pulang.
-                                // Subsequent times (like Telat Masuk duration) are ignored.
+                            } elseif (str_contains($kehadiran, 'TMDHM') || str_contains($kehadiran, 'PC1-TMDHM')) {
                                 $jamPulang = $rawTimes[0] ?? null;
                                 $jamMasuk = null;
-                            }
-                            // Group 3: Only Masuk expected (e.g., missed afternoon scan)
-                            elseif (str_contains($kehadiran, 'TMDHP')) {
-                                // The FIRST HH:mm appearing on a TMDHP line is the Jam Masuk.
+                            } elseif (str_contains($kehadiran, 'TMDHP')) {
                                 $jamMasuk = $rawTimes[0] ?? null;
                                 $jamPulang = null;
-                            }
-                            // Group 4: Standard presence expecting both or unknown presence codes
-                            else {
-                                // In BKN reports, clock times appear first, followed by durations (Telat/PC).
-                                // We take the first two matches as Masuk and Pulang.
+                            } else {
                                 if (count($rawTimes) >= 2) {
                                     $jamMasuk  = $rawTimes[0];
                                     $jamPulang = $rawTimes[1];
                                 } elseif (count($rawTimes) === 1) {
-                                    // Fallback for single scan: use hour to guess if it's morning or afternoon
                                     $t1 = $rawTimes[0];
                                     $h1 = (int)explode(':', $t1)[0];
                                     if ($h1 < 12) {
@@ -397,37 +399,9 @@ class DataAbsensi extends Component
                                 }
                             }
 
-                            // Calculate Telat / Pulang Cepat - STRICT SYSTEM CALCULATION
-                            // Ketentuan: Masuk 08:00 WIB, Pulang 16:30 WIB
-                            $telatFormatted = '-';
-                            $pulangCepatFormatted = '-';
-
-                            // 1. Telat Masuk Calculation
-                            if ($jamMasuk && !in_array($kehadiran, ['TK', 'LN', 'LJ'])) {
-                                $masukVs = Carbon::parse($jamMasuk);
-                                if ($masukVs->format('H:i:s') > '08:00:00') {
-                                    $limitSeconds = 8 * 3600;
-                                    $parts = explode(':', $masukVs->format('H:i:s'));
-                                    $currentSeconds = ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
-                                    $diff = $currentSeconds - $limitSeconds;
-                                    $telatFormatted = sprintf('%02d:%02d', intdiv($diff, 3600), intdiv($diff % 3600, 60));
-                                }
-                            }
-
-                            // 2. Pulang Cepat Calculation
-                            if ($jamPulang && !in_array($kehadiran, ['TK', 'LN', 'LJ'])) {
-                                $pulangVs = Carbon::parse($jamPulang);
-                                if ($pulangVs->format('H:i:s') < '16:30:00') {
-                                    $limitSeconds = (16 * 3600) + (30 * 60);
-                                    $parts = explode(':', $pulangVs->format('H:i:s'));
-                                    $currentSeconds = ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
-                                    $diff = $limitSeconds - $currentSeconds;
-                                    $pulangCepatFormatted = sprintf('%02d:%02d', intdiv($diff, 3600), intdiv($diff % 3600, 60));
-                                }
-                            }
-
-                            // 3. Build keterangan - STRICTLY BASED ON KEHADIRAN CODE
-                            $keteranganStr = Absensi::getKeteranganByCode($kehadiran);
+                            // Calculate stats
+                            $telatData = $this->hitungTelatMasuk($jamMasuk);
+                            $pulangCepatData = $this->hitungPulangCepat($jamPulang);
 
                             $allParsedResults[] = [
                                 '_index' => $globalIndex++,
@@ -436,38 +410,15 @@ class DataAbsensi extends Component
                                 'unit' => $unitKerja,
                                 'tanggal' => Carbon::parse($tanggalStr)->format('d-m-Y'),
                                 'kehadiran' => $kehadiran,
-                                'jam_masuk' => $jamMasuk ? Carbon::parse($jamMasuk)->format('H:i') : null,
-                                'jam_pulang' => $jamPulang ? Carbon::parse($jamPulang)->format('H:i') : null,
-                                'menit_telat' => 0,
-                                'telat_formatted' => $telatFormatted,
-                                'pulang_cepat_formatted' => $pulangCepatFormatted,
-                                'keterangan' => $keteranganStr,
+                                'jam_masuk' => $jamMasuk,
+                                'jam_pulang' => $jamPulang,
+                                'menit_telat' => $telatData['menit'],
+                                'jam_telat_str' => $telatData['str'],
+                                'menit_pulang_cepat' => $pulangCepatData['menit'],
+                                'jam_pulang_cepat_str' => $pulangCepatData['str'],
+                                'keterangan' => $this->getKeterangan($kehadiran),
                             ];
                         }
-
-                        Log::info("Jam Masuk: " . ($jamMasuk ?? 'null') . ", Jam Pulang: " . ($jamPulang ?? 'null'));
-
-                        // Hitung telat dan pulang cepat
-                        $telatData = $this->hitungTelatMasuk($jamMasuk);
-                        $pulangCepatData = $this->hitungPulangCepat($jamPulang);
-
-                        Log::info("Telat: {$telatData['menit']} menit, PC: {$pulangCepatData['menit']} menit");
-
-                        $allParsedResults[] = [
-                            '_index' => $globalIndex++,
-                            'nip' => $nip,
-                            'nama' => $nama,
-                            'unit' => $unitKerja,
-                            'tanggal' => $tanggalDB,
-                            'kehadiran' => $kehadiran,
-                            'jam_masuk' => $jamMasuk,
-                            'jam_pulang' => $jamPulang,
-                            'menit_telat' => $telatData['menit'],
-                            'jam_telat_str' => $telatData['str'],
-                            'menit_pulang_cepat' => $pulangCepatData['menit'],
-                            'jam_pulang_cepat_str' => $pulangCepatData['str'],
-                            'keterangan' => $this->getKeterangan($kehadiran),
-                        ];
                     }
                 }
             }
@@ -504,7 +455,7 @@ class DataAbsensi extends Component
 
         $this->isProcessing = false;
     }
-        public function saveData()
+    public function saveData()
     {
         if (empty($this->previewData)) {
             session()->flash('error', 'Tidak ada data untuk disimpan.');
@@ -557,7 +508,6 @@ class DataAbsensi extends Component
 
             session()->flash('success', 'Berhasil menyimpan ' . $savedCount . ' data.');
             $this->reset(['pdfFile', 'previewData', 'showPreview', 'selectedKedeputian']);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Save Error: ' . $e->getMessage());

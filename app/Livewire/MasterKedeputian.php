@@ -47,7 +47,6 @@ class MasterKedeputian extends Component
             ['nama' => $this->nama]
         );
 
-        // ✅ CATAT LOG AKTIVITAS
         ActivityLog::create([
             'user_id' => Auth::id(),
             'action' => $isUpdate ? 'Update Kedeputian' : 'Create Kedeputian',
@@ -68,7 +67,6 @@ class MasterKedeputian extends Component
 
         $kedeputian->delete();
 
-        // ✅ CATAT LOG AKTIVITAS
         ActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'Delete Kedeputian',

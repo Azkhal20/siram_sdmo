@@ -9,7 +9,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div class="lg:col-span-1 space-y-4">
             <div class="p-4 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-3xl">
-                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pilih Kedeputian Target</label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pilih Kedeputian</label>
                 <select wire:model.live="selectedKedeputian" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5">
                     <option value="">-- Pilih Kedeputian --</option>
                     @foreach($kedeputianList as $kd)

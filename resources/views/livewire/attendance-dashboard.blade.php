@@ -238,7 +238,7 @@
         <div class="p-8 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <h3 class="text-[12px] font-black text-gray-900 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
                 <div class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></div>
-                Log Aktivitas Terbaru
+                Data Absensi Terbaru
             </h3>
             <span class="px-3 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-[10px] font-black rounded-lg uppercase tracking-wider border border-blue-100 dark:border-blue-800">Real-time Feed</span>
         </div>

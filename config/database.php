@@ -60,10 +60,11 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                // SSL CA untuk TiDB Cloud di Vercel
-                1012 => env('MYSQL_ATTR_SSL_CA', isset($_SERVER['VERCEL_URL']) ? '/etc/pki/tls/certs/ca-bundle.crt' : null),
-                1014 => env('DB_SSL_VERIFY', true),
-]) : [],
+                // PDO::MYSQL_ATTR_SSL_CA
+                1012 => env('MYSQL_ATTR_SSL_CA', '/etc/pki/tls/certs/ca-bundle.crt'),
+                // PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
+                1014 => env('DB_SSL_VERIFY', false), // Set false jika masih error transport
+            ]) : [],
         ],
 
         'mariadb' => [

@@ -392,9 +392,9 @@ class DataAbsensi extends Component
                                 'jam_masuk' => $jamMasuk,
                                 'jam_pulang' => $jamPulang,
                                 'menit_telat' => $telatData['menit'],
-                                'jam_telat_str' => $telatData['str'],
+                                'telat_formatted' => $telatData['str'] ?: '-',
                                 'menit_pulang_cepat' => $pulangCepatData['menit'],
-                                'jam_pulang_cepat_str' => $pulangCepatData['str'],
+                                'pulang_cepat_formatted' => $pulangCepatData['str'] ?: '-',
                                 'keterangan' => $this->getKeterangan($kehadiran),
                             ];
                         }

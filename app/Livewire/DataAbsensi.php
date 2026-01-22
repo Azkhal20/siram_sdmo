@@ -28,7 +28,6 @@ class DataAbsensi extends Component
     private $jamMasukNormal = '08:00';
     private $jamPulangNormal = '16:30';
 
-    // Daftar kode kehadiran (urutan penting: yang lebih panjang dulu)
     private $kodeKehadiran = [
         'TMDHM',
         'TMDHP',
@@ -110,12 +109,6 @@ class DataAbsensi extends Component
         };
     }
 
-    /**
-     * Pecah kode kehadiran gabungan menjadi array kode tunggal
-     * Contoh: 'TM3PC1' => ['TM3', 'PC1']
-     * Contoh: 'TM3-PC1' => ['TM3', 'PC1']
-     * Contoh: 'PC1-TMDHM' => ['PC1', 'TMDHM']
-     */
     private function parseKodeGabungan(string $kodeGabungan): array
     {
         $kodeGabungan = strtoupper(trim($kodeGabungan));
@@ -144,7 +137,6 @@ class DataAbsensi extends Component
 
             // Jika tidak ada yang cocok, keluar dari loop
             if (!$found) {
-                // Jika masih ada sisa, tambahkan sebagai kode tunggal
                 if (!empty($sisaKode)) {
                     $hasil[] = $sisaKode;
                 }
@@ -281,12 +273,6 @@ class DataAbsensi extends Component
             $allParsedResults = [];
             $globalIndex = 0;
 
-            // Build regex pattern untuk kode kehadiran
-            // Pattern ini menangkap kode tunggal, gabungan dengan '-', atau gabungan tanpa separator
-            $kodeList = implode('|', $this->kodeKehadiran);
-            // Pattern: menangkap kombinasi kode (dengan atau tanpa '-')
-            $kodePattern = '/\b((?:' . $kodeList . ')(?:[-]?(?:' . $kodeList . '))*)\b/i';
-
             foreach ($pages as $page) {
                 $text = $page->getText();
                 $lines = explode("\n", $text);
@@ -314,19 +300,18 @@ class DataAbsensi extends Component
                     $line = trim($line);
                     if (empty($line)) continue;
 
-                    // Initialize all variables at the start of each line loop to prevent undefined variable errors
                     $kehadiran = null;
                     $jamMasuk = null;
                     $jamPulang = null;
-                    $menitTelat = 0;
 
                     if (preg_match('/(\d{2}[\-\/]\d{2}[\-\/]\d{4})/', $line, $dateMatches)) {
                         $tanggalRaw = $dateMatches[1];
                         $tanggalStr = str_replace('/', '-', $tanggalRaw);
 
-                        // Regex Strategy:
-                        // Group 1: Sticky Codes (can follow digits/spaces, e.g. 2026TM1, PC1-TMDHM)
-                        // Group 2: Standalone Codes (Strict Word Boundaries, e.g. S, I, C, TK)
+                        // Konversi tanggal ke format d-m-Y untuk preview
+                        $tanggalFormatted = Carbon::parse($tanggalStr)->format('d-m-Y');
+
+                        // Regex untuk kode kehadiran
                         $compound = 'PC\s?\d+[\s-]?TMDHM|TM\s?\d+[\s-]?TMDHP|TMDHM|TMDHP';
                         $concat   = 'TM\d+PC\d+|PC\d+TM\d+';
                         $simple   = 'TM\s?\d*|PC\s?\d*';
@@ -336,29 +321,21 @@ class DataAbsensi extends Component
                         $codesPattern = "/(?:^|[\s\d])({$stickyPart})(?:\b|$)|\b({$standalonePart})\b/i";
 
                         if (preg_match($codesPattern, $line, $codeMatches)) {
-                            // Determine which group matched
                             $raw = !empty($codeMatches[1]) ? $codeMatches[1] : ($codeMatches[2] ?? '');
 
                             if ($raw) {
-                                // Normalize
                                 $upperRaw = strtoupper(str_replace(' ', '', $raw));
 
-                                // 1. Handle PC1-TMDHM variations
                                 if (str_contains($upperRaw, 'TMD') && str_contains($upperRaw, 'PC')) {
                                     preg_match('/PC(\d+)/', $upperRaw, $pcM);
                                     $num = $pcM[1] ?? '1';
                                     $kehadiran = "PC{$num}-TMDHM";
-                                }
-                                // 2. Handle TM3PC1 concatenated variations
-                                elseif (preg_match('/^(TM\d+)(PC\d+)$/', $upperRaw, $splitM) || preg_match('/^(PC\d+)(TM\d+)$/', $upperRaw, $splitM)) {
+                                } elseif (preg_match('/^(TM\d+)(PC\d+)$/', $upperRaw, $splitM) || preg_match('/^(PC\d+)(TM\d+)$/', $upperRaw, $splitM)) {
                                     $kehadiran = $upperRaw;
-                                }
-                                // 3. Standard
-                                else {
+                                } else {
                                     $kehadiran = $upperRaw;
                                 }
 
-                                // Specific check for PC number preservation
                                 if (str_contains($upperRaw, 'TMDHM') && str_contains($upperRaw, 'PC') && !str_contains($kehadiran, '-')) {
                                     preg_match('/PC(\d+)/', $upperRaw, $pcM);
                                     $num = $pcM[1] ?? '1';
@@ -367,7 +344,6 @@ class DataAbsensi extends Component
                             }
                         }
 
-                        // Only proceed if a recognized attendance code is found
                         if ($kehadiran) {
                             preg_match_all('/(\d{2}:\d{2})/', $line, $timeMatches);
                             $rawTimes = $timeMatches[1] ?? [];
@@ -398,6 +374,9 @@ class DataAbsensi extends Component
                                     }
                                 }
                             }
+                                                        // Hitung telat dan pulang cepat
+                            $telatData = $this->hitungTelatMasuk($jamMasuk);
+                            $pulangCepatData = $this->hitungPulangCepat($jamPulang);
 
                             // Calculate stats
                             $telatData = $this->hitungTelatMasuk($jamMasuk);
@@ -408,7 +387,7 @@ class DataAbsensi extends Component
                                 'nip' => $nip,
                                 'nama' => $nama,
                                 'unit' => $unitKerja,
-                                'tanggal' => Carbon::parse($tanggalStr)->format('d-m-Y'),
+                                'tanggal' => $tanggalFormatted,
                                 'kehadiran' => $kehadiran,
                                 'jam_masuk' => $jamMasuk,
                                 'jam_pulang' => $jamPulang,
@@ -423,9 +402,7 @@ class DataAbsensi extends Component
                 }
             }
 
-
-
-            // Sort by NIP then Tanggal (Proper Date Comparison)
+            // Sort by NIP then Tanggal
             usort($allParsedResults, function ($a, $b) {
                 if ($a['nip'] === $b['nip']) {
                     $da = Carbon::createFromFormat('d-m-Y', $a['tanggal']);
@@ -435,7 +412,7 @@ class DataAbsensi extends Component
                 return strcmp($a['nip'], $b['nip']);
             });
 
-            // Re-map after sorting to ensure _index matches the array key for Livewire binding
+            // Re-map index setelah sorting
             $allParsedResults = collect($allParsedResults)->map(function ($item, $key) {
                 $item['_index'] = $key;
                 return $item;
@@ -467,7 +444,7 @@ class DataAbsensi extends Component
             $savedCount = 0;
 
             foreach ($this->previewData as $data) {
-                // Parse date from d-m-Y format as set in parsePdf
+                // Parse date from d-m-Y format
                 $tanggal = Carbon::createFromFormat('d-m-Y', $data['tanggal'])->format('Y-m-d');
 
                 $peserta = PesertaMagang::updateOrCreate(

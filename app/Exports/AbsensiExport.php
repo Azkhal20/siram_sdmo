@@ -95,7 +95,7 @@ class AbsensiExport implements FromCollection, WithHeadings, WithMapping, WithSt
 
         return [
             $this->no,
-            $absensi->pesertaMagang->nomor_induk ?? '-',
+           "'" . ($absensi->pesertaMagang->nomor_induk ?? '-'),
             $absensi->pesertaMagang->nama ?? '-',
             $absensi->pesertaMagang->kedeputian->nama ?? '-',
             $absensi->pesertaMagang->unit_kerja_text ?? '-',

@@ -11,13 +11,13 @@ foreach ($storageTemplates as $path) {
         mkdir($path, 0755, true);
     }
 }
-// 2. Paksa konfigurasi kritis untuk Vercel
-putenv('APP_CONFIG_CACHE=/tmp/config.php');
-putenv('APP_SERVICES_CACHE=/tmp/services.php');
-putenv('APP_PACKAGES_CACHE=/tmp/packages.php');
-putenv('APP_ROUTES_CACHE=/tmp/routes.php');
-// Matikan caching yang mencoba menulis ke disk read-only
-putenv('CONFIG_CACHE=false');
-putenv('ROUTES_CACHE=false');
+// 2. Setting wajib untuk Vercel (HAPUS jalur APP_*_CACHE yang lama)
+putenv('SESSION_DRIVER=cookie');
+putenv('LOG_CHANNEL=stderr');
+putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
+// Pastikan flag VERCEL aktif untuk dibaca di bootstrap/app.php
+if (isset($_SERVER['VERCEL_URL'])) {
+    putenv('VERCEL=1');
+}
 // 3. Masuk ke Laravel
 require __DIR__ . '/../public/index.php';

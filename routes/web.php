@@ -15,7 +15,7 @@ Route::get('/master/peserta', MasterPeserta::class)->name('master.peserta');
 Route::get('/master/kedeputian', MasterKedeputian::class)->name('master.kedeputian');
 Route::get('/log-aktivitas', LogAktivitas::class)->name('log-aktivitas');
 
-// Maintenance Route for Vercel Migrations
+// Maintenance Route for Database Migrations
 Route::get('/terminal/migrate', function () {
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);

@@ -60,10 +60,9 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                // PDO::MYSQL_ATTR_SSL_CA
-                1012 => env('MYSQL_ATTR_SSL_CA', '/etc/pki/tls/certs/ca-bundle.crt'),
-                // PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
-                1014 => env('DB_SSL_VERIFY', false), // Set false jika masih error transport
+                // SSL CA untuk TiDB Cloud (Standard Linux Path for Render)
+                1012 => env('MYSQL_ATTR_SSL_CA', '/etc/ssl/certs/ca-certificates.crt'),
+                1014 => env('DB_SSL_VERIFY', true),
             ]) : [],
         ],
 

@@ -19,6 +19,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Fix for Vite assets on Vercel
+        if (env('VERCEL')) {
+            $this->app->bind('path.public', function () {
+                return base_path('public');
+            });
+        }
+
         // Only override if accessed via a subfolder (XAMPP style)
         $root = request()->getBasePath();
 
@@ -28,10 +35,4 @@ class AppServiceProvider extends ServiceProvider
             });
         }
     }
-
-    
-
-
-
-
 }

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: siram-sdmo
+    env: php
+    plan: free
+    buildCommand: composer install --no-dev && npm install && npm run build
+    startCommand: php artisan serve --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_DEBUG
+        value: true
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: PHP_VERSION
+        value: 8.2

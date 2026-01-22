@@ -3,6 +3,7 @@
     "framework": null,
     "functions": {
         "api/index.php": {
+<<<<<<< Updated upstream
             "runtime": "vercel-php@0.9.0"
         }
     },
@@ -17,3 +18,15 @@
         }
     ]
 }
+=======
+            "runtime": "vercel-php@0.6.0",
+            "memory": 1024,
+            "maxDuration": 10
+        }
+    },
+    "routes": [
+        { "src": "/build/(.*)", "dest": "/public/build/$1" },
+        { "src": "/(.*)", "dest": "/api/index.php" }
+    ]
+}
+>>>>>>> Stashed changes

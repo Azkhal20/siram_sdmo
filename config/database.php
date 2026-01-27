@@ -46,7 +46,6 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
-            // Laravel akan mengecek DB_HOST, jika tidak ada (di Vercel), dia akan pakai TIDB_HOST
             'host' => env('DB_HOST', env('TIDB_HOST', '127.0.0.1')),
             'port' => env('DB_PORT', env('TIDB_PORT', '3306')),
             'database' => env('DB_DATABASE', env('TIDB_DATABASE', 'laravel')),
@@ -60,10 +59,11 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                // SSL CA untuk TiDB Cloud di Vercel
-                1012 => env('MYSQL_ATTR_SSL_CA', isset($_SERVER['VERCEL_URL']) ? '/etc/pki/tls/certs/ca-bundle.crt' : null),
-                1014 => env('DB_SSL_VERIFY', true),
-]) : [],
+                // PDO::MYSQL_ATTR_SSL_CA
+                1012 => env('MYSQL_ATTR_SSL_CA', '/etc/pki/tls/certs/ca-bundle.crt'),
+                // PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
+                1014 => env('DB_SSL_VERIFY', false), // Set false jika masih error transport
+            ]) : [],
         ],
 
         'mariadb' => [
@@ -82,7 +82,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+                1012 => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 

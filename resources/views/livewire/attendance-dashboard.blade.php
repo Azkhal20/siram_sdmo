@@ -5,17 +5,17 @@
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Real-time statistik absensi periode terpilih.</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-            <div class="relative min-w-[180px]">
-                <select wire:model.live="selectedKedeputian" class="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-black uppercase text-gray-900 dark:text-white rounded-2xl focus:ring-blue-500 focus:border-blue-500 block p-3 transition-shadow shadow-sm hover:shadow-md cursor-pointer">
-                    <option value="">Semua Kedeputian</option>
+        <div class="flex flex-wrap md:flex-nowrap items-center gap-2">
+            <div class="relative w-[300px] md:w-[520px]">
+                <select wire:model.live="selectedKedeputian" class="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-black uppercase text-gray-900 dark:text-white rounded-2xl focus:ring-blue-500 focus:border-blue-500 block p-3 transition-shadow shadow-sm hover:shadow-md cursor-pointer truncate">
+                    <option value="">Semua Unit</option>
                     @foreach($kedeputians as $k)
                     <option value="{{ $k->id }}">{{ $k->nama }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div class="relative min-w-[140px]">
+            <div class="relative min-w-[120px]">
                 <select wire:model.live="selectedMonth" class="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-black uppercase text-gray-900 dark:text-white rounded-2xl focus:ring-blue-500 focus:border-blue-500 block p-3 transition-shadow shadow-sm hover:shadow-md cursor-pointer">
                     @foreach($months as $val => $label)
                     <option value="{{ $val }}">{{ $label }}</option>
@@ -23,13 +23,21 @@
                 </select>
             </div>
 
-            <div class="relative min-w-[100px]">
+            <div class="relative min-w-[90px]">
                 <select wire:model.live="selectedYear" class="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-black uppercase text-gray-900 dark:text-white rounded-2xl focus:ring-blue-500 focus:border-blue-500 block p-3 transition-shadow shadow-sm hover:shadow-md cursor-pointer">
                     @foreach($years as $year)
                     <option value="{{ $year }}">{{ $year }}</option>
                     @endforeach
                 </select>
             </div>
+
+            <!-- Export Button (White Style) -->
+            <a href="{{ route('dashboard.export', ['month' => $selectedMonth, 'year' => $selectedYear, 'kedeputian_id' => $selectedKedeputian, 'active_detail' => $activeDetail]) }}" target="_blank" class="flex items-center justify-center p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm hover:shadow-md hover:border-red-500 transition-all active:scale-95 group" title="Export PDF">
+                <svg class="w-5 h-5 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span class="ml-2 text-[11px] font-black uppercase text-gray-900 dark:text-white hidden sm:inline-block">PDF</span>
+            </a>
         </div>
     </div>
 
@@ -46,20 +54,24 @@
         </div>
 
         <!-- Total TK -->
-        <div class="p-8 bg-gradient-to-br from-red-500 to-rose-700 rounded-3xl text-white shadow-xl shadow-red-500/20 relative overflow-hidden group">
+        <div wire:click="setActiveDetail('TK')" class="cursor-pointer p-8 bg-gradient-to-br from-red-500 to-rose-700 rounded-3xl text-white shadow-xl shadow-red-500/20 relative overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all {{ $activeDetail === 'TK' ? 'ring-4 ring-red-300 dark:ring-red-900 scale-[1.02]' : '' }}">
             <h4 class="text-sm font-black uppercase tracking-widest opacity-80 mb-2">Total TK</h4>
             <p class="text-5xl font-black mb-1">{{ $stats['total_tk'] ?? 0 }}</p>
-            <p class="text-xs font-bold opacity-70">TANPA KETERANGAN</p>
+            <p class="text-xs font-bold opacity-70">
+                {{ $activeDetail === 'TK' ? 'KLIK UNTUK TUTUP' : 'KLIK UNTUK LIHAT DATA' }}
+            </p>
             <svg class="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
             </svg>
         </div>
 
         <!-- Total TM -->
-        <div class="p-8 bg-gradient-to-br from-amber-500 to-orange-700 rounded-3xl text-white shadow-xl shadow-amber-500/20 relative overflow-hidden group">
+        <div wire:click="setActiveDetail('TM')" class="cursor-pointer p-8 bg-gradient-to-br from-amber-500 to-orange-700 rounded-3xl text-white shadow-xl shadow-amber-500/20 relative overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all {{ $activeDetail === 'TM' ? 'ring-4 ring-amber-300 dark:ring-amber-900 scale-[1.02]' : '' }}">
             <h4 class="text-sm font-black uppercase tracking-widest opacity-80 mb-2">Total TM</h4>
             <p class="text-5xl font-black mb-1">{{ $stats['total_tm'] ?? 0 }}</p>
-            <p class="text-xs font-bold opacity-70">TERLAMBAT MASUK</p>
+            <p class="text-xs font-bold opacity-70">
+                {{ $activeDetail === 'TM' ? 'KLIK UNTUK TUTUP' : 'KLIK UNTUK LIHAT DATA' }}
+            </p>
             <svg class="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"></path>
                 <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"></path>
@@ -67,10 +79,12 @@
         </div>
 
         <!-- Total PC -->
-        <div class="p-8 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-3xl text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden group">
+        <div wire:click="setActiveDetail('PC')" class="cursor-pointer p-8 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-3xl text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all {{ $activeDetail === 'PC' ? 'ring-4 ring-emerald-300 dark:ring-emerald-900 scale-[1.02]' : '' }}">
             <h4 class="text-sm font-black uppercase tracking-widest opacity-80 mb-2">Total PC</h4>
             <p class="text-5xl font-black mb-1">{{ $stats['total_pc'] ?? 0 }}</p>
-            <p class="text-xs font-bold opacity-70">PULANG CEPAT</p>
+            <p class="text-xs font-bold opacity-70">
+                {{ $activeDetail === 'PC' ? 'KLIK UNTUK TUTUP' : 'KLIK UNTUK LIHAT DATA' }}
+            </p>
             <svg class="absolute -right-4 -bottom-4 w-24 h-24 opacity-20 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"></path>
             </svg>
@@ -234,34 +248,51 @@
         </div>
     </div>
     <!-- Recent Activity Table (Full Width) -->
-    <div class="mt-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[2.5rem] shadow-sm overflow-hidden">
-        <div class="p-8 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+    <!-- Recent Activity / Detail Table (Full Width) -->
+    <div
+        id="detail-table-section"
+        x-data="{ scrollToTable() { $el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }"
+        @scroll-to-table.window="scrollToTable()"
+        class="mt-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[2.5rem] shadow-sm overflow-hidden min-h-[400px]">
+        <div class="p-8 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h3 class="text-[12px] font-black text-gray-900 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                <div class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></div>
-                Data Absensi Terbaru
+                <div class="w-1.5 h-1.5 rounded-full {{ $activeDetail === 'recent' ? 'bg-blue-600 animate-pulse' : ($activeDetail === 'TK' ? 'bg-red-600' : ($activeDetail === 'TM' ? 'bg-amber-600' : 'bg-emerald-600')) }}"></div>
+                {{ $activeDetail === 'recent' ? 'Data Absensi Terbaru' : 'Detail Data ' . ($activeDetail == 'TK' ? 'Tanpa Keterangan (TK)' : ($activeDetail == 'TM' ? 'Terlambat Masuk (TM)' : 'Pulang Cepat (PC)')) }}
             </h3>
-            <span class="px-3 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-[10px] font-black rounded-lg uppercase tracking-wider border border-blue-100 dark:border-blue-800">Real-time Feed</span>
+            <div class="flex items-center gap-2">
+                <span class="px-3 py-1 bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-[10px] font-black rounded-lg uppercase tracking-wider border border-gray-100 dark:border-gray-700">
+                    Total: {{ $detailData->total() }} Data
+                </span>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50/50 dark:bg-gray-700/30 text-[10px] font-black uppercase text-gray-400 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700">
+                <thead class="bg-white dark:bg-gray-800 text-[12px] font-black uppercase text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700">
                     <tr>
+                        @if($activeDetail === 'recent')
                         <th class="px-8 py-5">Peserta Magang</th>
                         <th class="px-8 py-5">Unit Kedeputian</th>
                         <th class="px-8 py-5 text-center">Tanggal Absensi</th>
                         <th class="px-8 py-5 text-center">Status</th>
                         <th class="px-8 py-5">Keterangan Sistem</th>
+                        @else
+                        <th class="px-8 py-5 text-center w-20">No</th>
+                        <th class="px-8 py-5">Nama Peserta</th>
+                        <th class="px-8 py-5">Unit Kedeputian</th>
+                        <th class="px-8 py-5 text-right">Total</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
-                    @forelse($recentAbsensi as $item)
+                    @forelse($detailData as $item)
+                    @if($activeDetail === 'recent')
                     <tr class="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors group">
                         <td class="px-8 py-5">
                             <p class="font-extrabold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{{ $item->pesertaMagang->nama }}</p>
                             <p class="text-[10px] text-gray-400 font-mono tracking-tighter">{{ $item->pesertaMagang->nip }}</p>
                         </td>
                         <td class="px-8 py-5">
-                            <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight italic">{{ $item->pesertaMagang->kedeputian->nama }}</span>
+                            <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight">{{ $item->pesertaMagang->kedeputian->nama }}</span>
                         </td>
                         <td class="px-8 py-5 text-center">
                             <p class="text-xs font-black text-gray-700 dark:text-gray-300 uppercase">{{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d F Y') }}</p>
@@ -277,9 +308,29 @@
                             </p>
                         </td>
                     </tr>
+                    @else
+                    <!-- Aggregated View for Detail Stats -->
+                    <tr class="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors group">
+                        <td class="px-8 py-5 text-center font-bold text-gray-400">
+                            {{ ($detailData->currentPage() - 1) * $detailData->perPage() + $loop->iteration }}
+                        </td>
+                        <td class="px-8 py-5">
+                            <p class="font-extrabold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{{ $item->pesertaMagang->nama }}</p>
+                            <p class="text-[10px] text-gray-400 font-mono tracking-tighter">{{ $item->pesertaMagang->nip }}</p>
+                        </td>
+                        <td class="px-8 py-5">
+                            <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight">{{ $item->pesertaMagang->kedeputian->nama }}</span>
+                        </td>
+                        <td class="px-8 py-5 text-right">
+                            <span class="text-sm font-black {{ $activeDetail === 'TK' ? 'text-red-600' : ($activeDetail === 'TM' ? 'text-amber-600' : 'text-emerald-600') }}">
+                                {{ $item->total_count }} Kali
+                            </span>
+                        </td>
+                    </tr>
+                    @endif
                     @empty
                     <tr>
-                        <td colspan="5" class="px-8 py-20 text-center">
+                        <td colspan="{{ $activeDetail === 'recent' ? 5 : 4 }}" class="px-8 py-20 text-center">
                             <div class="flex flex-col items-center opacity-40">
                                 <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -291,6 +342,33 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- Pagination Links -->
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-800/50">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    Results: <span class="font-bold text-gray-900 dark:text-white">{{ $detailData->firstItem() ?? 0 }} - {{ $detailData->lastItem() ?? 0 }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ $detailData->total() }}</span>
+                </span>
+                <div class="relative">
+                    <select wire:model.live="perPage" wire:change="$dispatch('scroll-to-table')" style="appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: none !important;" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block py-1.5 pl-3 pr-9 font-bold cursor-pointer transition-all shadow-sm hover:border-blue-400">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end flex-1 w-full md:w-auto">
+                {{ $detailData->links('livewire.custom-pagination', ['scrollTo' => '#detail-table-section']) }}
+            </div>
         </div>
     </div>
 </div>

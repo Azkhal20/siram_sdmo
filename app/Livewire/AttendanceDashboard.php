@@ -10,9 +10,13 @@ use Illuminate\Support\Facades\DB;
 
 class AttendanceDashboard extends Component
 {
+    use \Livewire\WithPagination;
+
     public $selectedMonth;
     public $selectedYear;
     public $selectedKedeputian = "";
+    public $activeDetail = 'recent'; // recent, TK, TM, PC
+    public $perPage = 10;
 
     public function mount()
     {
@@ -34,6 +38,49 @@ class AttendanceDashboard extends Component
             $this->selectedMonth = date('m');
             $this->selectedYear = date('Y');
         }
+    }
+
+    public function updatedSelectedKedeputian($value)
+    {
+        if (!$value) {
+            // When switching to All Units, always jump to the global latest available month
+            $latest = Absensi::orderBy('tanggal', 'desc')->first();
+            if ($latest && $latest->tanggal) {
+                $date = \Carbon\Carbon::parse($latest->tanggal);
+                $this->selectedMonth = $date->format('m');
+                $this->selectedYear = $date->format('Y');
+            }
+        } else {
+            // When switching to a specific Unit, only jump if the current month has no data for that unit
+            $hasDataCurrentPeriod = Absensi::whereMonth('tanggal', $this->selectedMonth)
+                ->whereYear('tanggal', $this->selectedYear)
+                ->whereHas('pesertaMagang', function ($pq) use ($value) {
+                    $pq->where('kedeputian_id', $value);
+                })->exists();
+
+            if (!$hasDataCurrentPeriod) {
+                $latest = Absensi::whereHas('pesertaMagang', function ($pq) use ($value) {
+                    $pq->where('kedeputian_id', $value);
+                })->orderBy('tanggal', 'desc')->first();
+
+                if ($latest && $latest->tanggal) {
+                    $date = \Carbon\Carbon::parse($latest->tanggal);
+                    $this->selectedMonth = $date->format('m');
+                    $this->selectedYear = $date->format('Y');
+                }
+            }
+        }
+
+        $this->resetPage();
+    }
+
+    public function setActiveDetail($type)
+    {
+        $this->activeDetail = ($this->activeDetail === $type) ? 'recent' : $type;
+        $this->resetPage(); // Reset pagination when switching tabs
+
+        // Dispatch event for auto-scrolling
+        $this->dispatch('scroll-to-table');
     }
 
     public function getMonths()
@@ -118,12 +165,43 @@ class AttendanceDashboard extends Component
             $maxTK = $topTK->first()?->count ?? 1;
             $maxTM = $topTM->first()?->count ?? 1;
 
-            // Recent Absensi (Real-time data)
-            $recentAbsensi = (clone $query)->orderBy('tanggal', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->with(['pesertaMagang.kedeputian'])
-                ->take(10)
-                ->get();
+            // Prepare Data for List Table
+            $listQuery = (clone $query)->with(['pesertaMagang.kedeputian']);
+
+            if ($this->activeDetail === 'recent') {
+                $detailData = $listQuery->orderBy('tanggal', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->paginate($this->perPage);
+            } elseif ($this->activeDetail === 'TK') {
+                $detailData = $listQuery->where('kehadiran', 'TK')
+                    ->select('peserta_magang_id', DB::raw('count(*) as total_count'))
+                    ->groupBy('peserta_magang_id')
+                    ->orderBy('total_count', 'desc')
+                    ->paginate($this->perPage);
+            } elseif ($this->activeDetail === 'TM') {
+                $detailData = $listQuery->where(function ($q) {
+                    $q->where('kehadiran', 'like', 'TM%')->orWhere('kehadiran', 'like', '%TM%');
+                })
+                    ->select('peserta_magang_id', DB::raw('count(*) as total_count'))
+                    ->groupBy('peserta_magang_id')
+                    ->orderBy('total_count', 'desc')
+                    ->paginate($this->perPage);
+            } elseif ($this->activeDetail === 'PC') {
+                $detailData = $listQuery->where(function ($q) {
+                    $q->where('kehadiran', 'like', 'PC%')->orWhere('kehadiran', 'like', '%PC%');
+                })
+                    ->select('peserta_magang_id', DB::raw('count(*) as total_count'))
+                    ->groupBy('peserta_magang_id')
+                    ->orderBy('total_count', 'desc')
+                    ->paginate($this->perPage);
+            } else {
+                $detailData = Absensi::whereRaw('1=0')->paginate($this->perPage);
+            }
+
+            // Final safety check to ensure detailData is always a paginator
+            if (!($detailData instanceof \Illuminate\Contracts\Pagination\Paginator)) {
+                $detailData = new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage);
+            }
 
             return view('livewire.attendance-dashboard', [
                 'stats' => $stats,
@@ -131,7 +209,7 @@ class AttendanceDashboard extends Component
                 'topTM' => $topTM,
                 'maxTK' => $maxTK,
                 'maxTM' => $maxTM,
-                'recentAbsensi' => $recentAbsensi,
+                'detailData' => $detailData,
                 'months' => $this->getMonths(),
                 'years' => range(date('Y'), date('Y') - 5),
                 'kedeputians' => Kedeputian::orderBy('nama')->get(),
@@ -146,7 +224,7 @@ class AttendanceDashboard extends Component
                 'topTM' => collect(),
                 'maxTK' => 1,
                 'maxTM' => 1,
-                'recentAbsensi' => collect(),
+                'detailData' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10),
                 'months' => $this->getMonths(),
                 'years' => range(date('Y'), date('Y') - 5),
                 'kedeputians' => collect(),

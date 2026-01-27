@@ -105,8 +105,25 @@ class DataAbsensi extends Component
             'S' => 'Sakit',
             'I' => 'Izin',
             'C' => 'Cuti',
+            'K' => 'Kategori Lain',
             default => $kode,
         };
+    }
+
+    private function getTMCodeFromMinutes(int $minutes): string
+    {
+        if ($minutes <= 0) return 'HN';
+        if ($minutes <= 30) return 'TM1';
+        if ($minutes <= 60) return 'TM2';
+        return 'TM3';
+    }
+
+    private function getPCCodeFromMinutes(int $minutes): string
+    {
+        if ($minutes <= 0) return 'HN';
+        if ($minutes <= 30) return 'PC1';
+        if ($minutes <= 60) return 'PC2';
+        return 'PC3';
     }
 
     private function parseKodeGabungan(string $kodeGabungan): array
@@ -230,7 +247,7 @@ class DataAbsensi extends Component
         return ['menit' => 0, 'str' => ''];
     }
 
-    private function hitungPulangCepat(?string $jamPulang): array
+    private function hitungPulangCepat(?string $jamPulang, bool $isJumat = false): array
     {
         if (!$jamPulang || empty(trim($jamPulang))) {
             return ['menit' => 0, 'str' => ''];
@@ -239,7 +256,10 @@ class DataAbsensi extends Component
         try {
             $jamPulang = trim($jamPulang);
             $pulangMenit = $this->timeToMinutes($jamPulang);
-            $normalMenit = $this->timeToMinutes($this->jamPulangNormal);
+
+            // Hari Jumat jam pulang 17:00, hari lain 16:30
+            $baseline = $isJumat ? '17:00' : $this->jamPulangNormal;
+            $normalMenit = $this->timeToMinutes($baseline);
 
             if ($pulangMenit < $normalMenit) {
                 $menitCepat = $normalMenit - $pulangMenit;
@@ -374,13 +394,39 @@ class DataAbsensi extends Component
                                     }
                                 }
                             }
-                                                        // Hitung telat dan pulang cepat
-                            $telatData = $this->hitungTelatMasuk($jamMasuk);
-                            $pulangCepatData = $this->hitungPulangCepat($jamPulang);
 
-                            // Calculate stats
+                            // Cek apakah hari Jumat
+                            $isJumat = Carbon::createFromFormat('d-m-Y', $tanggalFormatted)->isFriday();
+
+                            // Hitung telat dan pulang cepat
                             $telatData = $this->hitungTelatMasuk($jamMasuk);
-                            $pulangCepatData = $this->hitungPulangCepat($jamPulang);
+                            $pulangCepatData = $this->hitungPulangCepat($jamPulang, $isJumat);
+
+                            // Rekalkulasi Kode Kehadiran jika statusnya adalah Hadir/TM/PC
+                            $statusType = $this->parseKodeKehadiran($kehadiran);
+                            if (!$statusType['is_libur'] && !$statusType['is_tidak_hadir'] && !in_array($kehadiran, ['S', 'I', 'DL', 'C'])) {
+                                $finalCodes = [];
+
+                                // Evaluasi TM
+                                if ($telatData['menit'] > 0) {
+                                    $finalCodes[] = $this->getTMCodeFromMinutes($telatData['menit']);
+                                } elseif (!$jamMasuk && str_contains($kehadiran, 'TMDHM')) {
+                                    $finalCodes[] = 'TMDHM';
+                                }
+
+                                // Evaluasi PC
+                                if ($pulangCepatData['menit'] > 0) {
+                                    $finalCodes[] = $this->getPCCodeFromMinutes($pulangCepatData['menit']);
+                                } elseif (!$jamPulang && str_contains($kehadiran, 'TMDHP')) {
+                                    $finalCodes[] = 'TMDHP';
+                                }
+
+                                if (!empty($finalCodes)) {
+                                    $kehadiran = implode('-', $finalCodes);
+                                } else {
+                                    $kehadiran = 'HN';
+                                }
+                            }
 
                             $allParsedResults[] = [
                                 '_index' => $globalIndex++,

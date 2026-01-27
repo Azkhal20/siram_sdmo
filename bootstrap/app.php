@@ -16,6 +16,4 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })
-    ->create()
-    ->useStoragePath(isset($_SERVER['VERCEL_URL']) || env('VERCEL') ? '/tmp/storage' : storage_path())
-    ->usePublicPath(isset($_SERVER['VERCEL_URL']) || env('VERCEL') ? base_path('public') : public_path());
+    ->create();

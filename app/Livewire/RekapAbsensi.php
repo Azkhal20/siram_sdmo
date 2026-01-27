@@ -21,6 +21,19 @@ class RekapAbsensi extends Component
     public $sortDirection = 'desc';
     public $perPage = 10;
 
+    // Modal Edit
+    public $showEditModal = false;
+    public $editingAbsensiId;
+    public $editKehadiran;
+    public $editJamMasuk;
+    public $editJamPulang;
+    public $editKeterangan;
+
+    // Modal Delete
+    public $showDeleteModal = false;
+    public $deletingAbsensiId;
+    public $deletingPesertaNama;
+
     private $kodeKehadiranList = [
         'TMDHM', 'TMDHP',
         'TM1', 'TM2', 'TM3', 'TM',
@@ -34,6 +47,81 @@ class RekapAbsensi extends Component
         'fromDate' => ['except' => ''],
         'toDate' => ['except' => ''],
     ];
+
+    // Method untuk membuka modal edit
+    public function openEditModal($absensiId)
+    {
+        $absensi = Absensi::with('pesertaMagang')->findOrFail($absensiId);
+        
+        $this->editingAbsensiId = $absensiId;
+        $this->editKehadiran = $absensi->kehadiran;
+        $this->editJamMasuk = $absensi->jam_masuk ? \Carbon\Carbon::parse($absensi->jam_masuk)->format('H:i') : '';
+        $this->editJamPulang = $absensi->jam_pulang ? \Carbon\Carbon::parse($absensi->jam_pulang)->format('H:i') : '';
+        $this->editKeterangan = $absensi->keterangan;
+        
+        $this->showEditModal = true;
+    }
+
+    // Method untuk menutup modal edit
+    public function closeEditModal()
+    {
+        $this->showEditModal = false;
+        $this->reset(['editingAbsensiId', 'editKehadiran', 'editJamMasuk', 'editJamPulang', 'editKeterangan']);
+        $this->resetValidation();
+    }
+
+    // Method untuk update data
+    public function updateAbsensi()
+    {
+        $this->validate([
+            'editKehadiran' => 'required|string',
+            'editJamMasuk' => 'nullable|date_format:H:i',
+            'editJamPulang' => 'nullable|date_format:H:i',
+            'editKeterangan' => 'nullable|string|max:500',
+        ], [
+            'editKehadiran.required' => 'Kehadiran wajib diisi.',
+            'editJamMasuk.date_format' => 'Format jam masuk tidak valid (HH:MM).',
+            'editJamPulang.date_format' => 'Format jam pulang tidak valid (HH:MM).',
+        ]);
+
+        $absensi = Absensi::findOrFail($this->editingAbsensiId);
+        
+        $absensi->update([
+            'kehadiran' => $this->editKehadiran,
+            'jam_masuk' => $this->editJamMasuk ?: null,
+            'jam_pulang' => $this->editJamPulang ?: null,
+            'keterangan' => $this->editKeterangan,
+        ]);
+
+        session()->flash('success', 'Data absensi berhasil diupdate.');
+        $this->closeEditModal();
+    }
+
+    // Method untuk membuka modal delete
+    public function openDeleteModal($absensiId)
+    {
+        $absensi = Absensi::with('pesertaMagang')->findOrFail($absensiId);
+        $this->deletingAbsensiId = $absensiId;
+        $this->deletingPesertaNama = $absensi->pesertaMagang->nama;
+        $this->showDeleteModal = true;
+    }
+
+    // Method untuk menutup modal delete
+    public function closeDeleteModal()
+    {
+        $this->showDeleteModal = false;
+        $this->reset(['deletingAbsensiId', 'deletingPesertaNama']);
+    }
+
+    // Method untuk delete data
+    public function deleteAbsensi()
+    {
+        $absensi = Absensi::findOrFail($this->deletingAbsensiId);
+        $absensi->delete();
+
+        session()->flash('success', 'Data absensi berhasil dihapus.');
+        $this->closeDeleteModal();
+    }
 
     public function updatingSearch()
     {
@@ -161,9 +249,6 @@ class RekapAbsensi extends Component
         return !empty($keteranganParts) ? implode(' & ', $keteranganParts) . '.' : '-';
     }
 
-    /**
-     * Mendapatkan nama kedeputian berdasarkan ID
-     */
     private function getNamaKedeputian(): string
     {
         if (empty($this->filterKedeputian)) {
@@ -178,9 +263,6 @@ class RekapAbsensi extends Component
         return 'Kedeputian_' . $this->filterKedeputian;
     }
 
-    /**
-     * Mendapatkan rentang tanggal untuk nama file
-     */
     private function getRentangTanggal(): string
     {
         if ($this->fromDate && $this->toDate) {
@@ -194,9 +276,6 @@ class RekapAbsensi extends Component
         return 'Semua_Tanggal';
     }
 
-    /**
-     * Export ke format XLSX menggunakan Laravel Excel
-     */
     public function exportExcel()
     {
         $namaKedeputian = $this->getNamaKedeputian();

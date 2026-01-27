@@ -14,6 +14,7 @@ Route::get('/absensi/rekap', RekapAbsensi::class)->name('absensi.rekap');
 Route::get('/master/peserta', MasterPeserta::class)->name('master.peserta');
 Route::get('/master/kedeputian', MasterKedeputian::class)->name('master.kedeputian');
 Route::get('/log-aktivitas', LogAktivitas::class)->name('log-aktivitas');
+Route::get('/dashboard/export', [App\Http\Controllers\DashboardExportController::class, 'export'])->name('dashboard.export');
 
 // Maintenance Route for Vercel Migrations
 Route::get('/terminal/migrate', function () {

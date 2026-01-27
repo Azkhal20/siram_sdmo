@@ -519,17 +519,23 @@ class DataAbsensi extends Component
 
             DB::commit();
 
+            $dates = collect($this->previewData)->map(function ($item) {
+                return Carbon::createFromFormat('d-m-Y', $item['tanggal']);
+            });
+            $minDate = $dates->min()->translatedFormat('d F Y');
+            $maxDate = $dates->max()->translatedFormat('d F Y');
+
             $kedeputian = Kedeputian::find($this->selectedKedeputian);
             ActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'Import Absensi',
                 'model_type' => 'Absensi',
                 'model_id' => null,
-                'description' => 'Import ' . $savedCount . ' data absensi ke Kedeputian: ' . ($kedeputian->nama ?? 'Unknown'),
+                'description' => 'Import ' . $savedCount . ' data absensi ke Kedeputian: ' . ($kedeputian->nama ?? 'Unknown') . " (Periode: $minDate - $maxDate)",
                 'ip_address' => request()->ip(),
             ]);
 
-            session()->flash('success', 'Berhasil menyimpan ' . $savedCount . ' data.');
+            session()->flash('success', 'Berhasil menyimpan ' . $savedCount . ' data absensi untuk periode ' . $minDate . ' s/d ' . $maxDate . '.');
             $this->reset(['pdfFile', 'previewData', 'showPreview', 'selectedKedeputian']);
         } catch (\Exception $e) {
             DB::rollBack();

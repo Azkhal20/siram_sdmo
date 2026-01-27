@@ -17,10 +17,11 @@ foreach ($storageTemplates as $path) {
 putenv('SESSION_DRIVER=cookie');
 putenv('LOG_CHANNEL=stderr');
 putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
+putenv('CACHE_DRIVER=array');
+putenv('QUEUE_CONNECTION=sync');
 
-if (isset($_SERVER['VERCEL_URL'])) {
-    putenv('VERCEL=1');
-}
+// 3. Set base path untuk Laravel
+$_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/../public/index.php';
 
-// 3. Masuk ke Laravel
+// 4. Masuk ke Laravel
 require __DIR__ . '/../public/index.php';

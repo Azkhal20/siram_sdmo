@@ -46,7 +46,6 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
-            // Laravel akan mengecek DB_HOST, jika tidak ada (di Vercel), dia akan pakai TIDB_HOST
             'host' => env('DB_HOST', env('TIDB_HOST', '127.0.0.1')),
             'port' => env('DB_PORT', env('TIDB_PORT', '3306')),
             'database' => env('DB_DATABASE', env('TIDB_DATABASE', 'laravel')),

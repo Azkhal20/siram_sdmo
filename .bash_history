@@ -37,3 +37,7 @@ mysql -h db -u root -p
 clear
 docker exec -it siram-sdmo-db mysql -uroot -psecret
 exit
+php artisan config:clear
+php artisan migrate:fresh --seed
+php artisan storage:link
+exit

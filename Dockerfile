@@ -3,8 +3,10 @@ FROM php:8.4-fpm
 # Set working directory
 WORKDIR /var/www
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies with retries and mirror fix
+RUN apt-get clean && \
+    apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends \
     git \
     curl \
     libpng-dev \

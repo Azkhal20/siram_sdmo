@@ -255,10 +255,26 @@
         @scroll-to-table.window="scrollToTable()"
         class="mt-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[2.5rem] shadow-sm overflow-hidden min-h-[400px]">
         <div class="p-8 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h3 class="text-[12px] font-black text-gray-900 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                <div class="w-1.5 h-1.5 rounded-full {{ $activeDetail === 'recent' ? 'bg-blue-600 animate-pulse' : ($activeDetail === 'TK' ? 'bg-red-600' : ($activeDetail === 'TM' ? 'bg-amber-600' : 'bg-emerald-600')) }}"></div>
+            @php
+            $headerColor = match($activeDetail) {
+            'TK' => 'text-red-600 dark:text-red-500',
+            'TM' => 'text-amber-600 dark:text-amber-500',
+            'PC' => 'text-emerald-600 dark:text-emerald-500',
+            default => 'text-blue-600 dark:text-blue-400',
+            };
+            $dotColor = match($activeDetail) {
+            'TK' => 'bg-red-600',
+            'TM' => 'bg-amber-600',
+            'PC' => 'bg-emerald-600',
+            default => 'bg-blue-600 animate-pulse',
+            };
+            @endphp
+
+            <h3 class="text-[12px] font-black uppercase tracking-[0.2em] flex items-center gap-3 {{ $headerColor }}">
+                <div class="w-1.5 h-1.5 rounded-full {{ $dotColor }}"></div>
                 {{ $activeDetail === 'recent' ? 'Data Absensi Terbaru' : 'Detail Data ' . ($activeDetail == 'TK' ? 'Tanpa Keterangan (TK)' : ($activeDetail == 'TM' ? 'Terlambat Masuk (TM)' : 'Pulang Cepat (PC)')) }}
             </h3>
+
             <div class="flex items-center gap-2">
                 <span class="px-3 py-1 bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-[10px] font-black rounded-lg uppercase tracking-wider border border-gray-100 dark:border-gray-700">
                     Total: {{ $detailData->total() }} Data
@@ -267,7 +283,7 @@
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
-                <thead class="bg-white dark:bg-gray-800 text-[12px] font-black uppercase text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700">
+                <thead class="bg-gray-100 dark:bg-gray-800 text-[12px] font-black uppercase text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-700">
                     <tr>
                         @if($activeDetail === 'recent')
                         <th class="px-8 py-5">Peserta Magang</th>
@@ -283,12 +299,26 @@
                         @endif
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($detailData as $item)
+                    @php
+                    $hoverClass = match($activeDetail) {
+                    'TK' => 'hover:bg-red-50/50 dark:hover:bg-red-900/10',
+                    'TM' => 'hover:bg-amber-50/50 dark:hover:bg-amber-900/10',
+                    'PC' => 'hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10',
+                    default => 'hover:bg-blue-50/30 dark:hover:bg-blue-900/10',
+                    };
+                    $textHoverClass = match($activeDetail) {
+                    'TK' => 'group-hover:text-red-600',
+                    'TM' => 'group-hover:text-amber-600',
+                    'PC' => 'group-hover:text-emerald-600',
+                    default => 'group-hover:text-blue-600',
+                    };
+                    @endphp
                     @if($activeDetail === 'recent')
-                    <tr class="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors group">
+                    <tr class="{{ $hoverClass }} transition-colors group cursor-pointer">
                         <td class="px-8 py-5">
-                            <p class="font-extrabold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{{ $item->pesertaMagang->nama }}</p>
+                            <p class="font-extrabold text-gray-900 dark:text-white {{ $textHoverClass }} transition-colors">{{ $item->pesertaMagang->nama }}</p>
                             <p class="text-[10px] text-gray-400 font-mono tracking-tighter">{{ $item->pesertaMagang->nip }}</p>
                         </td>
                         <td class="px-8 py-5">
@@ -310,12 +340,12 @@
                     </tr>
                     @else
                     <!-- Aggregated View for Detail Stats -->
-                    <tr class="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors group">
+                    <tr class="{{ $hoverClass }} transition-colors group cursor-pointer">
                         <td class="px-8 py-5 text-center font-bold text-gray-400">
                             {{ ($detailData->currentPage() - 1) * $detailData->perPage() + $loop->iteration }}
                         </td>
                         <td class="px-8 py-5">
-                            <p class="font-extrabold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{{ $item->pesertaMagang->nama }}</p>
+                            <p class="font-extrabold text-gray-900 dark:text-white {{ $textHoverClass }} transition-colors">{{ $item->pesertaMagang->nama }}</p>
                             <p class="text-[10px] text-gray-400 font-mono tracking-tighter">{{ $item->pesertaMagang->nip }}</p>
                         </td>
                         <td class="px-8 py-5">
@@ -347,8 +377,8 @@
         <!-- Pagination Links -->
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-800/50">
             <div class="flex items-center gap-4">
-                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                    Results: <span class="font-bold text-gray-900 dark:text-white">{{ $detailData->firstItem() ?? 0 }} - {{ $detailData->lastItem() ?? 0 }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ $detailData->total() }}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    Results: <span class="font-black text-gray-900 dark:text-white">{{ $detailData->firstItem() ?? 0 }} - {{ $detailData->lastItem() ?? 0 }}</span> of <span class="font-black text-gray-900 dark:text-white">{{ $detailData->total() }}</span>
                 </span>
                 <div class="relative">
                     <select wire:model.live="perPage" wire:change="$dispatch('scroll-to-table')" style="appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: none !important;" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block py-1.5 pl-3 pr-9 font-bold cursor-pointer transition-all shadow-sm hover:border-blue-400">

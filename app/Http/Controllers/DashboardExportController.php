@@ -106,6 +106,11 @@ class DashboardExportController extends Controller
             'pcList' => $pcList
         ]);
 
-        return $pdf->download('Laporan_Dashboard_' . $periodLabel . '.pdf');
+        // Generate Sanitized Filename
+        $safeKedeputianName = str_replace(' ', '_', preg_replace('/[^A-Za-z0-9\s]/', '', $kedeputianLabel));
+        $periodName = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->translatedFormat('F_Y');
+        $fileName = "Laporan_Dashboard_{$safeKedeputianName}_{$periodName}.pdf";
+
+        return $pdf->download($fileName);
     }
 }

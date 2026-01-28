@@ -43,17 +43,21 @@ class Absensi extends Model
 
     public function getTelatMasukAttribute()
     {
-        if (!$this->jam_masuk) return '-';
+        if (!$this->jam_masuk || strlen(trim($this->jam_masuk)) < 3) return '-';
 
-        // Parse to get H:i:s and normalize to a clean comparison
-        $timeStr = \Carbon\Carbon::parse($this->jam_masuk)->format('H:i:s');
-        [$h, $m, $s] = explode(':', $timeStr);
-        $totalSeconds = ($h * 3600) + ($m * 60) + $s;
-        $limitSeconds = 8 * 3600; // 08:00:00
+        try {
+            // Parse to get H:i:s and normalize to a clean comparison
+            $timeStr = \Carbon\Carbon::parse($this->jam_masuk)->format('H:i:s');
+            [$h, $m, $s] = explode(':', $timeStr);
+            $totalSeconds = ($h * 3600) + ($m * 60) + $s;
+            $limitSeconds = 8 * 3600; // 08:00:00
 
-        if ($totalSeconds > $limitSeconds) {
-            $diff = $totalSeconds - $limitSeconds;
-            return sprintf('%02d:%02d', intdiv($diff, 3600), intdiv($diff % 3600, 60));
+            if ($totalSeconds > $limitSeconds) {
+                $diff = $totalSeconds - $limitSeconds;
+                return sprintf('%02d:%02d', intdiv($diff, 3600), intdiv($diff % 3600, 60));
+            }
+        } catch (\Exception $e) {
+            return '-';
         }
 
         return '-';
@@ -61,16 +65,20 @@ class Absensi extends Model
 
     public function getPulangCepatAttribute()
     {
-        if (!$this->jam_pulang) return '-';
+        if (!$this->jam_pulang || strlen(trim($this->jam_pulang)) < 3) return '-';
 
-        $timeStr = \Carbon\Carbon::parse($this->jam_pulang)->format('H:i:s');
-        [$h, $m, $s] = explode(':', $timeStr);
-        $totalSeconds = ($h * 3600) + ($m * 60) + $s;
-        $limitSeconds = (16 * 3600) + (30 * 60); // 16:30:00
+        try {
+            $timeStr = \Carbon\Carbon::parse($this->jam_pulang)->format('H:i:s');
+            [$h, $m, $s] = explode(':', $timeStr);
+            $totalSeconds = ($h * 3600) + ($m * 60) + $s;
+            $limitSeconds = (16 * 3600) + (30 * 60); // 16:30:00
 
-        if ($totalSeconds < $limitSeconds) {
-            $diff = $limitSeconds - $totalSeconds;
-            return sprintf('%02d:%02d', intdiv($diff, 3600), intdiv($diff % 3600, 60));
+            if ($totalSeconds < $limitSeconds) {
+                $diff = $limitSeconds - $totalSeconds;
+                return sprintf('%02d:%02d', intdiv($diff, 3600), intdiv($diff % 3600, 60));
+            }
+        } catch (\Exception $e) {
+            return '-';
         }
 
         return '-';

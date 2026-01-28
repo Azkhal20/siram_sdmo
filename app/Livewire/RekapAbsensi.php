@@ -35,10 +35,25 @@ class RekapAbsensi extends Component
     public $deletingPesertaNama;
 
     private $kodeKehadiranList = [
-        'TMDHM', 'TMDHP',
-        'TM1', 'TM2', 'TM3', 'TM',
-        'PC1', 'PC2', 'PC3', 'PC',
-        'HN', 'TK', 'DL', 'LJ', 'LN', 'S', 'I', 'C', 'K'
+        'TMDHM',
+        'TMDHP',
+        'TM1',
+        'TM2',
+        'TM3',
+        'TM',
+        'PC1',
+        'PC2',
+        'PC3',
+        'PC',
+        'HN',
+        'TK',
+        'DL',
+        'LJ',
+        'LN',
+        'S',
+        'I',
+        'C',
+        'K'
     ];
 
     protected $queryString = [
@@ -51,15 +66,23 @@ class RekapAbsensi extends Component
     // Method untuk membuka modal edit
     public function openEditModal($absensiId)
     {
-        $absensi = Absensi::with('pesertaMagang')->findOrFail($absensiId);
-        
-        $this->editingAbsensiId = $absensiId;
-        $this->editKehadiran = $absensi->kehadiran;
-        $this->editJamMasuk = $absensi->jam_masuk ? \Carbon\Carbon::parse($absensi->jam_masuk)->format('H:i') : '';
-        $this->editJamPulang = $absensi->jam_pulang ? \Carbon\Carbon::parse($absensi->jam_pulang)->format('H:i') : '';
-        $this->editKeterangan = $absensi->keterangan;
-        
-        $this->showEditModal = true;
+        try {
+            $absensi = Absensi::with('pesertaMagang')->findOrFail($absensiId);
+
+            $this->editingAbsensiId = $absensiId;
+            $this->editKehadiran = $absensi->kehadiran;
+
+            // Gunakan strtotime yang lebih aman daripada Carbon::parse untuk input modal
+            $this->editJamMasuk = ($absensi->jam_masuk && strtotime($absensi->jam_masuk))
+                ? date('H:i', strtotime($absensi->jam_masuk)) : '';
+            $this->editJamPulang = ($absensi->jam_pulang && strtotime($absensi->jam_pulang))
+                ? date('H:i', strtotime($absensi->jam_pulang)) : '';
+
+            $this->editKeterangan = $absensi->keterangan;
+            $this->showEditModal = true;
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal memuat data edit.');
+        }
     }
 
     // Method untuk menutup modal edit
@@ -85,7 +108,7 @@ class RekapAbsensi extends Component
         ]);
 
         $absensi = Absensi::findOrFail($this->editingAbsensiId);
-        
+
         $absensi->update([
             'kehadiran' => $this->editKehadiran,
             'jam_masuk' => $this->editJamMasuk ?: null,
@@ -297,23 +320,28 @@ class RekapAbsensi extends Component
 
     public function render()
     {
-        $absensis = Absensi::with('pesertaMagang.kedeputian')
-            ->whereHas('pesertaMagang', function ($query) {
-                $query->where('nama', 'like', '%' . $this->search . '%');
-            })
-            ->when($this->filterKedeputian, function ($query) {
-                $query->whereHas('pesertaMagang', function ($q) {
-                    $q->where('kedeputian_id', $this->filterKedeputian);
-                });
-            })
-            ->when($this->fromDate, function ($query) {
-                $query->whereDate('tanggal', '>=', $this->fromDate);
-            })
-            ->when($this->toDate, function ($query) {
-                $query->whereDate('tanggal', '<=', $this->toDate);
-            })
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+        try {
+            $absensis = Absensi::with('pesertaMagang.kedeputian')
+                ->whereHas('pesertaMagang', function ($query) {
+                    $query->where('nama', 'like', '%' . $this->search . '%');
+                })
+                ->when($this->filterKedeputian, function ($query) {
+                    $query->whereHas('pesertaMagang', function ($q) {
+                        $q->where('kedeputian_id', $this->filterKedeputian);
+                    });
+                })
+                ->when($this->fromDate, function ($query) {
+                    $query->whereDate('tanggal', '>=', $this->fromDate);
+                })
+                ->when($this->toDate, function ($query) {
+                    $query->whereDate('tanggal', '<=', $this->toDate);
+                })
+                ->orderBy($this->sortField, $this->sortDirection)
+                ->paginate($this->perPage);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Rekap Render Error: ' . $e->getMessage());
+            $absensis = new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage);
+        }
 
         return view('livewire.rekap-absensi', [
             'absensis' => $absensis,

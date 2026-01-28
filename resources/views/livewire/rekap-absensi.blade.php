@@ -81,18 +81,18 @@
                         <td class="px-6 py-4 font-bold text-gray-400">{{ ($absensis->currentPage() - 1) * $absensis->perPage() + $loop->iteration }}</td>
                         <td class="px-6 py-4">
                             <div class="flex flex-col gap-1">
-                                <span class="font-bold text-gray-900 dark:text-white">{{ $abs->pesertaMagang->nama }}</span>
-                                <span class="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{{ $abs->pesertaMagang->nomor_induk ?? 'PM-000'.$abs->pesertaMagang->id }}</span>
-                                <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded w-fit">{{ $abs->pesertaMagang->kedeputian->nama ?? '-' }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $abs->pesertaMagang?->nama ?? 'N/A' }}</span>
+                                <span class="text-[10px] text-gray-400 uppercase font-black tracking-tighter">{{ $abs->pesertaMagang?->nomor_induk ?? 'PM-000'.($abs->peserta_magang_id ?? '0') }}</span>
+                                <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded w-fit">{{ $abs->pesertaMagang?->kedeputian?->nama ?? '-' }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600 dark:text-gray-400">{{ $abs->tanggal->format('d M Y') }}</td>
-                        <td class="px-6 py-4 text-center"><span class="{{ $this->getBadgeClass($abs->kehadiran) }} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">{{ $abs->kehadiran }}</span></td>
-                        <td class="px-6 py-4 font-mono text-xs text-center">{{ $abs->jam_masuk ? \Carbon\Carbon::parse($abs->jam_masuk)->format('H:i') : '--:--' }}</td>
-                        <td class="px-6 py-4 font-mono text-xs text-center">{{ $abs->jam_pulang ? \Carbon\Carbon::parse($abs->jam_pulang)->format('H:i') : '--:--' }}</td>
-                        <td class="px-6 py-4 font-mono text-xs text-center text-red-500 font-bold">{{ $abs->telat_masuk }}</td>
-                        <td class="px-6 py-4 font-mono text-xs text-center text-orange-500 font-bold">{{ $abs->pulang_cepat }}</td>
-                        <td class="px-6 py-4 text-xs font-medium text-gray-600 dark:text-gray-400 max-w-[200px]">{{ $abs->keterangan_detail }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600 dark:text-gray-400">{{ $abs->tanggal?->format('d M Y') ?? '-' }}</td>
+                        <td class="px-6 py-4 text-center"><span class="{{ $this->getBadgeClass($abs->kehadiran ?? '') }} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">{{ $abs->kehadiran ?? '-' }}</span></td>
+                        <td class="px-6 py-4 font-mono text-xs text-center">{{ ($abs->jam_masuk && strtotime($abs->jam_masuk)) ? date('H:i', strtotime($abs->jam_masuk)) : '--:--' }}</td>
+                        <td class="px-6 py-4 font-mono text-xs text-center">{{ ($abs->jam_pulang && strtotime($abs->jam_pulang)) ? date('H:i', strtotime($abs->jam_pulang)) : '--:--' }}</td>
+                        <td class="px-6 py-4 font-mono text-xs text-center text-red-500 font-bold">{{ $abs->telat_masuk ?? '-' }}</td>
+                        <td class="px-6 py-4 font-mono text-xs text-center text-orange-500 font-bold">{{ $abs->pulang_cepat ?? '-' }}</td>
+                        <td class="px-6 py-4 text-xs font-medium text-gray-600 dark:text-gray-400 max-w-[200px]">{{ $abs->keterangan_detail ?? '-' }}</td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-2">
                                 <button wire:click="openEditModal({{ $abs->id }})" class="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all transform hover:scale-110"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,8 +112,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg></div>
                                 <h3 class="text-lg font-black text-gray-400 uppercase italic">Belum Ada Data</h3>
-                                <p class="text-xs text-gray-300 mt-1">Silakan lakukan import PDF melalui menu "Data
-                                    Absensi".</p>
+                                <p class="text-xs text-gray-300 mt-1">Silahkan lakukan import PDF melalui menu "Import PDF".</p>
                             </div>
                         </td>
                     </tr>

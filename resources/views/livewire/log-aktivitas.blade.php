@@ -51,12 +51,12 @@
     <!-- Pagination -->
     <div class="mt-6 px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-3xl">
         <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                Results: <span class="font-bold text-gray-900 dark:text-white">{{ $logs->firstItem() ?? 0 }} - {{ $logs->lastItem() ?? 0 }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ $logs->total() }}</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                Results: <span class="font-black text-gray-900 dark:text-white">{{ $logs->firstItem() ?? 0 }} - {{ $logs->lastItem() ?? 0 }}</span> of <span class="font-black text-gray-900 dark:text-white">{{ $logs->total() }}</span>
             </span>
             <div class="relative">
                 <select wire:model.live="perPage" style="appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: none !important;" class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block py-1.5 pl-3 pr-9 font-bold cursor-pointer transition-all shadow-sm hover:border-blue-400">
-                    <option value="15">15</option>
+                    <option value="10">10</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
                     <option value="100">100</option>

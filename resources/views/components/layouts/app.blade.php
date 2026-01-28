@@ -105,7 +105,7 @@
                         </svg>
                     </button>
                     <ul x-show="open && !isCollapsed" x-transition class="py-2 space-y-1 ms-4 border-l border-gray-100 dark:border-gray-700">
-                        <li><a href="{{ route('absensi.import') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg ps-4 group hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm {{ request()->routeIs('absensi.import') ? 'text-blue-600 font-bold' : 'text-gray-600 dark:text-gray-400' }}">Import/Export PDF</a></li>
+                        <li><a href="{{ route('absensi.import') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg ps-4 group hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm {{ request()->routeIs('absensi.import') ? 'text-blue-600 font-bold' : 'text-gray-600 dark:text-gray-400' }}">Import PDF</a></li>
                         <li><a href="{{ route('absensi.rekap') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg ps-4 group hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm {{ request()->routeIs('absensi.rekap') ? 'text-blue-600 font-bold' : 'text-gray-600 dark:text-gray-400' }}">Rekap Absensi</a></li>
                     </ul>
                 </li>

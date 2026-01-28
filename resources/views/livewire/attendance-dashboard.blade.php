@@ -1,4 +1,15 @@
-<div>
+<div style="--hover-bg: {{ $activeDetail === 'TK' ? '#fef2f2' : ($activeDetail === 'TM' ? '#fffbeb' : ($activeDetail === 'PC' ? '#ecfdf5' : '#eff6ff')) }};
+            --hover-bg-dark: {{ $activeDetail === 'TK' ? 'rgba(127, 29, 29, 0.2)' : ($activeDetail === 'TM' ? 'rgba(120, 53, 15, 0.2)' : ($activeDetail === 'PC' ? 'rgba(6, 78, 59, 0.2)' : 'rgba(30, 58, 138, 0.2)')) }};">
+    {{-- Custom Style untuk sinkronisasi warna hover lokal & server --}}
+    <style>
+        .custom-hover-row:hover {
+            background-color: var(--hover-bg) !important;
+        }
+
+        .dark .custom-hover-row:hover {
+            background-color: var(--hover-bg-dark) !important;
+        }
+    </style>
     <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Dashboard Overview</h2>
@@ -316,7 +327,7 @@
                     };
                     @endphp
                     @if($activeDetail === 'recent')
-                    <tr class="{{ $hoverClass }} transition-colors group cursor-pointer">
+                    <tr class="custom-hover-row transition-colors group cursor-pointer">
                         <td class="px-8 py-5">
                             <p class="font-extrabold text-gray-900 dark:text-white {{ $textHoverClass }} transition-colors">{{ $item->pesertaMagang->nama }}</p>
                             <p class="text-[10px] text-gray-400 font-mono tracking-tighter">{{ $item->pesertaMagang->nip }}</p>
@@ -340,7 +351,7 @@
                     </tr>
                     @else
                     <!-- Aggregated View for Detail Stats -->
-                    <tr class="{{ $hoverClass }} transition-colors group cursor-pointer">
+                    <tr class="custom-hover-row transition-colors group cursor-pointer">
                         <td class="px-8 py-5 text-center font-bold text-gray-400">
                             {{ ($detailData->currentPage() - 1) * $detailData->perPage() + $loop->iteration }}
                         </td>

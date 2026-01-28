@@ -31,7 +31,7 @@
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-[12px] font-black uppercase bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
+                <thead class="text-[12px] font-black uppercase bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white">
                     <tr>
                         <th class="px-6 py-4">NIP/No. Induk</th>
                         <th class="px-6 py-4">Nama Peserta</th>
@@ -39,7 +39,7 @@
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($pesertas as $p)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all">
                         <td class="px-6 py-4 font-black text-gray-900 dark:text-white uppercase tracking-tighter">{{ $p->nomor_induk }}</td>

@@ -283,7 +283,7 @@
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
-                <thead class="bg-gray-100 dark:bg-gray-800 text-[12px] font-black uppercase text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700">
+                <thead class="bg-gray-100 dark:bg-gray-800 text-[12px] font-black uppercase text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-700">
                     <tr>
                         @if($activeDetail === 'recent')
                         <th class="px-8 py-5">Peserta Magang</th>
@@ -299,12 +299,26 @@
                         @endif
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($detailData as $item)
+                    @php
+                    $hoverClass = match($activeDetail) {
+                    'TK' => 'hover:bg-red-50/50 dark:hover:bg-red-900/10',
+                    'TM' => 'hover:bg-amber-50/50 dark:hover:bg-amber-900/10',
+                    'PC' => 'hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10',
+                    default => 'hover:bg-blue-50/30 dark:hover:bg-blue-900/10',
+                    };
+                    $textHoverClass = match($activeDetail) {
+                    'TK' => 'group-hover:text-red-600',
+                    'TM' => 'group-hover:text-amber-600',
+                    'PC' => 'group-hover:text-emerald-600',
+                    default => 'group-hover:text-blue-600',
+                    };
+                    @endphp
                     @if($activeDetail === 'recent')
-                    <tr class="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors group">
+                    <tr class="{{ $hoverClass }} transition-colors group cursor-pointer">
                         <td class="px-8 py-5">
-                            <p class="font-extrabold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{{ $item->pesertaMagang->nama }}</p>
+                            <p class="font-extrabold text-gray-900 dark:text-white {{ $textHoverClass }} transition-colors">{{ $item->pesertaMagang->nama }}</p>
                             <p class="text-[10px] text-gray-400 font-mono tracking-tighter">{{ $item->pesertaMagang->nip }}</p>
                         </td>
                         <td class="px-8 py-5">
@@ -326,12 +340,12 @@
                     </tr>
                     @else
                     <!-- Aggregated View for Detail Stats -->
-                    <tr class="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors group">
+                    <tr class="{{ $hoverClass }} transition-colors group cursor-pointer">
                         <td class="px-8 py-5 text-center font-bold text-gray-400">
                             {{ ($detailData->currentPage() - 1) * $detailData->perPage() + $loop->iteration }}
                         </td>
                         <td class="px-8 py-5">
-                            <p class="font-extrabold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{{ $item->pesertaMagang->nama }}</p>
+                            <p class="font-extrabold text-gray-900 dark:text-white {{ $textHoverClass }} transition-colors">{{ $item->pesertaMagang->nama }}</p>
                             <p class="text-[10px] text-gray-400 font-mono tracking-tighter">{{ $item->pesertaMagang->nip }}</p>
                         </td>
                         <td class="px-8 py-5">

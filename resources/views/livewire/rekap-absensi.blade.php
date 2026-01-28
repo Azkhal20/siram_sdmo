@@ -56,7 +56,7 @@
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-sm overflow-hidden min-w-full">
         <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
             <table class="w-full min-w-[1200px] text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-[12px] font-black uppercase bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
+                <thead class="text-[12px] font-black uppercase bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white">
                     <tr>
                         <th class="px-6 py-4">No</th>
                         <th class="px-6 py-4">Nama Peserta</th>
@@ -75,7 +75,7 @@
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($absensis as $abs)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group">
                         <td class="px-6 py-4 font-bold text-gray-400">{{ ($absensis->currentPage() - 1) * $absensis->perPage() + $loop->iteration }}</td>
